@@ -1,0 +1,10 @@
+export const USER = "User";
+export const ADMIN = "Admin";
+export const EVENT = "Event";
+export const SUPERADMIN = "superadmin";
+export const EVENTMANAGER = "eventmanager";
+export const PENDING = "Pending";
+export const APPROVED = "Approved";
+export const REJECTED = "Rejected";
+export const CONFIRMED = "Confirmed";
+export const CANCELLED = "Cancelled";

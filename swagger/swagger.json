@@ -1,0 +1,39 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Core",
+    "description": "This Service handles all APIs for Core!"
+  },
+  "host": "localhost:8080",
+  "servers": ["localhost:8080"],
+  "tags": [
+    {
+      "name": "Customer",
+      "description": ""
+    },
+    {
+      "name": "Admin",
+      "description": ""
+    },
+    {
+      "name": "Games",
+      "description": ""
+    },
+    {
+      "name": "Groups",
+      "description": ""
+    },
+    {
+      "name": "Posts",
+      "description": ""
+    },
+    {
+      "name": "Team",
+      "description": ""
+    }
+  ],
+  "schemes": ["http"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"]
+}
