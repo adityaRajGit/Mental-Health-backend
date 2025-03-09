@@ -1,0 +1,47 @@
+
+CREATE
+
+curl --location '{{url}}/api/v1/user/new' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU' \
+--data-raw '{
+    "user": {
+        "is_deleted": false,
+        "created_at": "2023-09-21T05:40:39.287Z",
+        "updated_at": "2023-09-21T05:40:39.288Z"
+    }
+}'
+
+LIST
+
+curl --location '{{url}}/api/v1/user/list' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU' \
+--data '{
+    "pageNum": 1,
+    "pageSize": 20,
+    "filters": {}
+}'
+
+GET
+
+curl --location '{{url}}/api/v1/user/:user_id' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU'
+
+UPDATE
+
+curl --location '{{url}}/api/v1/user/:user_id/update' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU' \
+--data '{
+    "user" : {
+        "contact_name" : "Adirta"
+    }
+}'
+
+
+DELETE
+
+curl --location --request POST '{{url}}/api/v1/user/:user_id/remove' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU'
+
