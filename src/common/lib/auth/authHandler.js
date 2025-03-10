@@ -37,6 +37,7 @@ export async function userSignupHandler(input) {
     name: input.name,
     phone: input.phone,
     email: input.email,
+    username: input.username,
     profile_pic: input.profile_pic,
     password: hashedPassword,
   };
