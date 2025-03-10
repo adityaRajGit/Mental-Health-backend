@@ -2,7 +2,7 @@ const configVariables = {
   stage: process.env.STAGE || "dev",
   mongoURL:
     process.env.MONGO_URL ||
-    "mongodb://localhost:27017/",
+    "mongodb://localhost:27017/social-app",
   PORT: Number(process.env.PORT) || 8080,
   JWT_SECRET: "s0c13l@pp",
   JWT_EXPIRATION: "7d",

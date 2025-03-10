@@ -4,13 +4,14 @@ import compression from "compression";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import chalk from "./chalk";
+import chalk from "../server/chalk";
 // import nodeCron from 'node-cron';
 // import axios from 'axios';
 
-import serverConfig from "./config";
-import main from "./routes/main.routes";
-// import user from "./routes/user.routes";
+import serverConfig from "../server/config";
+import mainRoutes from "../server/routes/main.routes";
+import userRoutes from "../server/routes/user.routes";
+import authRoutes from "../server/routes/auth.routes";
 
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
@@ -114,9 +115,9 @@ app.use((req, res, next) => {
 
 // routes for main application
 
-// base crud (admin application)
-app.use("/", main);
-// app.use("/api/v1/user", user);
+app.use("/", mainRoutes);
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 // Swagger API documentation
 app.use(
