@@ -16,6 +16,8 @@ const userSchema = new Schema({
     username:{
         type: String,
         required: true,
+        unique: true,
+        trim: true
     },
     phone:{
         type: String,
@@ -29,6 +31,21 @@ const userSchema = new Schema({
     profile_pic: {
         type: String
     },
+    bio: String,
+    status : {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active'
+    },
+    lastLogin : Date,
+    isPrivate: {
+        type: Boolean,
+        default: false
+      },
+    blockedUsers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+    }],
     is_deleted: {
         type: Boolean,
         default: false 

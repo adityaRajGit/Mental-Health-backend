@@ -1,0 +1,50 @@
+
+CREATE
+
+curl --location '{{url}}/api/v1/post/new' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU' \
+--data-raw '{
+    "post": {
+        "author": "6521a0f5e4b0a5c3d8f2b8a1",
+        "content": "This is a sample post to test the API functionality.",
+        "likes": ["6521a0f5e4b0a5c3d8f2b8a2", "6521a0f5e4b0a5c3d8f2b8a3"],
+        "hugs": ["6521a0f5e4b0a5c3d8f2b8a4"],
+        "shares": ["6521a0f5e4b0a5c3d8f2b8a5"],
+        "visibility": "public"
+    }
+}'
+
+LIST
+
+curl --location '{{url}}/api/v1/post/list' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU' \
+--data '{
+    "pageNum": 1,
+    "pageSize": 20,
+    "filters": {}
+}'
+
+GET
+
+curl --location '{{url}}/api/v1/post/:post_id' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU'
+
+UPDATE
+
+curl --location '{{url}}/api/v1/post/:post_id/update' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU' \
+--data '{
+    "post" : {
+        "contact_name" : "Adirta"
+    }
+}'
+
+
+DELETE
+
+curl --location --request POST '{{url}}/api/v1/post/:post_id/remove' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU'
+

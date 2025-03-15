@@ -53,6 +53,7 @@
         "replaceall": "^0.1.6",
         "sendgrid": "^5.2.3",
         "shortid": "^2.2.16",
+        "social-media-backend": "file:",
         "swagger-autogen": "^2.23.7",
         "swagger-ui-express": "^4.6.0",
         "throng": "^4.0.0",

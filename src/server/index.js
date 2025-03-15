@@ -12,6 +12,9 @@ import serverConfig from "../server/config";
 import mainRoutes from "../server/routes/main.routes";
 import userRoutes from "../server/routes/user.routes";
 import authRoutes from "../server/routes/auth.routes";
+import postRoutes from "../server/routes/post.routes";
+import commentRoutes from "../server/routes/comment.routes";
+import shareRoutes from "../server/routes/share.routes";
 
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
@@ -118,6 +121,10 @@ app.use((req, res, next) => {
 app.use("/", mainRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/post", postRoutes);
+app.use("/api/v1/comment", commentRoutes);
+app.use("/api/v1/share", shareRoutes);
+
 
 // Swagger API documentation
 app.use(
