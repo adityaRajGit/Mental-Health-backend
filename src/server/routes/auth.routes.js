@@ -10,6 +10,8 @@ import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
 import {generateOtp,generateOtpExpireDate, mailsender} from "../../common/util/utilHelper";
 import {updateUserOtpHandler} from "../../common/lib/user/userHandler";
+import { verifyToken } from '../../common/lib/auth/authMiddleware'; // Add this import
+
 
 const router = new Router();
 
@@ -27,6 +29,10 @@ router.route("/signup").post(async (req, res) => {
       data: { message: err.message || err },
     });
   }
+});
+
+router.route("/me").get(verifyToken, async (req, res) => {
+  res.status(200).json(req.user);
 });
 
 router.route("/login").post(async (req, res) => {

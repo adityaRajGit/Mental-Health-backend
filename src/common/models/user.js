@@ -1,4 +1,3 @@
-
 import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
@@ -45,6 +44,14 @@ const userSchema = new Schema({
     blockedUsers: [{
     type: Schema.Types.ObjectId,
     ref: 'User'
+    }],
+    following: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    followers: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
     }],
     is_deleted: {
         type: Boolean,

@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import chalk from "../server/chalk";
+import cors from "cors";
 // import nodeCron from 'node-cron';
 // import axios from 'axios';
 
@@ -23,6 +24,19 @@ const app = new Express();
 const http = require("http").Server(app);
 
 // const io = require('socket.io')(http);
+const corsOptions = {
+  origin: "http://localhost:5173", // Allow requests from your frontend
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+  credentials: true, // Allow cookies and credentials
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+    "Access-Control-Allow-Credentials",
+  ],
+};
 
 // make connection with user from server side
 var room = 1;
@@ -82,7 +96,7 @@ const swaggerOptions = {
 // Apply body Parser and server public assets and routes
 // app.use(Raven.requestHandler());
 // app.use(Raven.errorHandler());
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(compression());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "100mb", extended: false }));
@@ -101,20 +115,6 @@ app.use("*", (req, res, next) => {
   next();
 });
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Credentials"
-  );
-  res.header("Access-Control-Allow-Credentials", "true");
-  if (req.method === "OPTIONS") {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
 
 // routes for main application
 

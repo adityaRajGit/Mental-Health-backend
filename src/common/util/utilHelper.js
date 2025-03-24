@@ -14,16 +14,11 @@ export function sanitizeCountryCode(text) {
 export function getUserInfo(user) {
   return {
     _id: user._id,
-    email: user.email,
-    phone: user.phone,
     name: user.name,
-    age: user.age,
-    address: user.address,
-    organization: user.organization,
-    referrerId: user.referrerId,
-    referralCode: user.referralCode,
-    referralEarnings: user.referralEarnings,
-    referredUsers: user.referredUsers,
+    username: user.username,
+    email: user.email,
+    profile_pic: user.profile_pic,
+    created_at: user.created_at
   };
 }
 
