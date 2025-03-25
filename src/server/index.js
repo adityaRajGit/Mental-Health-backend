@@ -25,7 +25,7 @@ const http = require("http").Server(app);
 
 // const io = require('socket.io')(http);
 const corsOptions = {
-  origin: ["http://localhost:5173","https://unfiltered-flame.vercel.app"], // Allow requests from your frontend
+  origin: "*", // Allow requests from your frontend
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
   credentials: true, // Allow cookies and credentials
   allowedHeaders: [
