@@ -40,30 +40,6 @@ const corsOptions = {
 
 // make connection with user from server side
 var room = 1;
-// io.on('connection', async (socket) => {
-
-//     console.log('New user connected');
-//     socket.on('chatMessage', async (resp) => {
-//         console.log('chatMessage', resp);
-//         let msgResp = {
-//             'group_id': '6394474dc7e9b33ec276e096'
-//         }
-//         let res = await fetchMessageForGroup(msgResp);
-//         console.log(res)
-//         socket.broadcast.emit('userMsg', res);
-//     })
-
-//     socket.on("disconnecting", () => {
-//         console.log(socket.rooms); // the Set contains at least the socket ID
-//     });
-
-//     // when server disconnects from user
-//     socket.on('disconnect', () => {
-//         console.log('disconnected from user');
-//     });
-
-// });
-
 // import formData from 'express-form-data'
 // const formidable = require('express-formidable');
 
