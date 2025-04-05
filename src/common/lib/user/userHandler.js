@@ -8,6 +8,8 @@ export async function getUserDetailsHandler(input) {
     return await userHelper.getObjectById(input);
 }
 
+
+
 export async function updateUserDetailsHandler(input) {
     return await userHelper.directUpdateObject(input.objectId, input.updateObject);
 }

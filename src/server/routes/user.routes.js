@@ -1,7 +1,7 @@
 
 import _ from 'lodash';
 import {Router} from 'express';
-
+import jwt from "jsonwebtoken";
 import {
     addNewUserHandler,
     deleteUserHandler,
@@ -9,6 +9,7 @@ import {
     getUserListHandler,
     updateUserDetailsHandler
 } from '../../common/lib/user/userHandler';
+import serverConfig from '../../server/config';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
 
@@ -78,6 +79,62 @@ router.route('/new').post(async (req, res) => {
         });
     }
 });
+
+router.route('/me').get(async (req, res) => {
+    try {
+        console.log("Authorization Header:", req.headers.authorization);
+
+        // Check if the Authorization header is present
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).send({
+                status: responseData.ERROR,
+                data: { message: "Authorization token missing or invalid" },
+            });
+        }
+
+        // Extract the token
+        const token = authHeader.split(" ")[1];
+        console.log("Token:", token);
+
+        // Verify the token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, serverConfig.JWT_SECRET); // Use serverConfig.JWT_SECRET
+        } catch (err) {
+            console.error("Token verification failed:", err);
+            return res.status(401).send({
+                status: responseData.ERROR,
+                data: { message: "Invalid or expired token" },
+            });
+        }
+        console.log("Decoded Token:", decoded);
+
+        // Fetch the user details
+        const gotUser = await getUserDetailsHandler({ id: decoded.userId });
+        console.log("Fetched User:", gotUser);
+
+        if (!gotUser) {
+            return res.status(404).send({
+                status: responseData.ERROR,
+                data: { message: "User not found" },
+            });
+        }
+
+        // Send the user details
+        res.status(responseStatus.STATUS_SUCCESS_OK).send({
+            status: responseData.SUCCESS,
+            data: { user: gotUser },
+        });
+    } catch (err) {
+        console.error("Error in /me route:", err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
+            status: responseData.ERROR,
+            data: { message: "Internal server error" },
+        });
+    }
+});
+
 
 router.route('/:id').get(async (req, res) => {
     try {
