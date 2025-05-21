@@ -16,7 +16,7 @@ import authRoutes from "../server/routes/auth.routes";
 import postRoutes from "../server/routes/post.routes";
 import commentRoutes from "../server/routes/comment.routes";
 import shareRoutes from "../server/routes/share.routes";
-
+import therapistRoutes from "../server/routes/therapist.routes";
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
 // Initialize the Express App
@@ -25,9 +25,9 @@ const http = require("http").Server(app);
 
 // const io = require('socket.io')(http);
 const corsOptions = {
-  origin: "*", // Allow requests from your frontend
+  origin: "*",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-  credentials: true, // Allow cookies and credentials
+  credentials: true,
   allowedHeaders: [
     "Origin",
     "X-Requested-With",
@@ -100,6 +100,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/post", postRoutes);
 app.use("/api/v1/comment", commentRoutes);
 app.use("/api/v1/share", shareRoutes);
+app.use("/api/v1/therapist",therapistRoutes);
 
 
 // Swagger API documentation
