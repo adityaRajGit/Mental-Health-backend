@@ -1,6 +1,6 @@
 {
     "name": "social-media-backend",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "social-media-backend",
     "main": "index.js",
     "private": true,
