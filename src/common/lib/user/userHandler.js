@@ -1,14 +1,22 @@
 import userHelper from '../../helpers/user.helper';
 
+function generateUsername(name) {
+    if (!name) return `user${Date.now()}`;
+    const base = name.trim().toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, '_');
+    return `${base}_${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
 export async function addNewUserHandler(input) {
+    // Auto-generate username if not provided
+    if (!input.username && input.name) {
+        input.username = generateUsername(input.name);
+    }
     return await userHelper.addObject(input);
 }
 
 export async function getUserDetailsHandler(input) {
     return await userHelper.getObjectById(input);
 }
-
-
 
 export async function updateUserDetailsHandler(input) {
     return await userHelper.directUpdateObject(input.objectId, input.updateObject);
@@ -26,4 +34,4 @@ export async function deleteUserHandler(input) {
 
 export async function getUserByQueryHandler(input) {
     return await userHelper.getObjectByQuery(input);
-}  
+}
