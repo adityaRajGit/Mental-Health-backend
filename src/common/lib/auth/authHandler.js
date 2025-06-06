@@ -23,6 +23,28 @@ async function generateUniqueReferralCode() {
   return code;
 }
 
+async function generateUniqueUsername(fullName) {
+  const baseUsername = fullName.toLowerCase().replace(/\s+/g, '');
+  let attempt = 0;
+  let username;
+
+  while (true) {
+    const randomNum = Math.floor(1000 + Math.random() * 9000); // Always 4 digits
+    username = `${baseUsername}${randomNum}`;
+
+    const exists = await userHelper.getObjectByQuery({ query: { username } });
+    if (!exists) break;
+
+    attempt++;
+    if (attempt > 10000) {
+      throw new Error("Too many attempts to generate a unique username");
+    }
+  }
+
+  return username;
+}
+
+
 export async function userSignupHandler(input) {
   // Validate input fields
   if (!input.name || !input.phone || !input.email || !input.password) {
@@ -32,13 +54,14 @@ export async function userSignupHandler(input) {
   // Hash the provided password
   const hashedPassword = await bcrypt.hash(input.password, 10);
 
+  let username = await generateUniqueUsername(input.name);
+
   // Prepare user data
   const userData = {
     name: input.name,
     phone: input.phone,
     email: input.email,
-    username: input.username,
-    profile_pic: input.profile_pic,
+    username: username,
     password: hashedPassword,
   };
 
