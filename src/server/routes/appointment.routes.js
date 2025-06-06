@@ -1,20 +1,17 @@
 
 import _ from 'lodash';
 import {Router} from 'express';
-import multer from 'multer';
+
 import {
-    addNewTherapistHandler,
-    deleteTherapistHandler,
-    getTherapistDetailsHandler,
-    getTherapistListHandler,
-    updateTherapistDetailsHandler,
-    addNewTherapistHandlerV2
-} from '../../common/lib/therapist/therapistHandler';
+    addNewAppointmentHandler,
+    deleteAppointmentHandler,
+    getAppointmentDetailsHandler,
+    getAppointmentListHandler,
+    updateAppointmentDetailsHandler
+} from '../../common/lib/appointment/appointmentHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
-import { storage } from "../../util/cloudinary.js";
 
-const upload = multer({ storage, limits: { fileSize: 500 * 1024 * 1024 } });
 const router = new Router();
 
 router.route('/list').post(async (req, res) => {
@@ -37,13 +34,13 @@ router.route('/list').post(async (req, res) => {
   
       filter.query = { ...filter.query };
   
-      const outputResult = await getTherapistListHandler(filter);
+      const outputResult = await getAppointmentListHandler(filter);
       res.status(responseStatus.STATUS_SUCCESS_OK);
       res.send({
         status: responseData.SUCCESS,
         data: {
-          therapistList: outputResult.list ? outputResult.list : [],
-          therapistCount: outputResult.count ? outputResult.count : 0,
+          appointmentList: outputResult.list ? outputResult.list : [],
+          appointmentCount: outputResult.count ? outputResult.count : 0,
         },
       });
     } catch (err) {
@@ -60,12 +57,12 @@ router.route('/list').post(async (req, res) => {
 router.route('/new').post(async (req, res) => {
     try {
        if (!_.isEmpty(req.body)) {
-            const outputResult = await addNewTherapistHandler(req.body.therapist);
+            const outputResult = await addNewAppointmentHandler(req.body.appointment);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
                 data: {
-                    therapist: outputResult ? outputResult : {}
+                    appointment: outputResult ? outputResult : {}
                 }
             });
         } else {
@@ -81,31 +78,17 @@ router.route('/new').post(async (req, res) => {
     }
 });
 
-router.post("/add-therapist", upload.fields([{ name: "img", maxCount: 5 }]), async (req, res) => {
-    try {
-        const files = req.files;
-        const therapistData = req.body;
 
-        const outputResult = await addNewTherapistHandlerV2({ ...therapistData, files });
-        res.status(200).send({
-            status: "SUCCESS",
-            data: { therapist: outputResult || {} }
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send({ status: "ERROR", data: { message: err.message } });
-    }
-});
 
 router.route('/:id').get(async (req, res) => {
     try {
         if (req.params.id) {
-            const gotTherapist = await getTherapistDetailsHandler(req.params);
+            const gotAppointment = await getAppointmentDetailsHandler(req.params);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
                 data: {
-                    therapist: gotTherapist ? gotTherapist : {}
+                    appointment: gotAppointment ? gotAppointment : {}
                 }
             });
         } else {
@@ -123,17 +106,17 @@ router.route('/:id').get(async (req, res) => {
 
 router.route('/:id/update').post( async (req, res) => {
     try {
-        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.therapist)) {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.appointment)) {
             let input = {
                 objectId: req.params.id,
-                updateObject: req.body.therapist
+                updateObject: req.body.appointment
             }
-            const updateObjectResult = await updateTherapistDetailsHandler(input);
+            const updateObjectResult = await updateAppointmentDetailsHandler(input);
             res.status(responseStatus.STATUS_SUCCESS_OK);
                 res.send({
                     status: responseData.SUCCESS,
                     data: {
-                        therapist: updateObjectResult ? updateObjectResult : {}
+                        appointment: updateObjectResult ? updateObjectResult : {}
                     }
                 });
         } else {
@@ -152,12 +135,12 @@ router.route('/:id/update').post( async (req, res) => {
 router.route('/:id/remove').post(async(req, res) => {
     try {
         if (req.params.id) {
-            const deletedTherapist = await deleteTherapistHandler(req.params.id);
+            const deletedAppointment = await deleteAppointmentHandler(req.params.id);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
                 data: {
-                    hasTherapistDeleted: true
+                    hasAppointmentDeleted: true
                 }
             });
         } else {
