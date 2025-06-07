@@ -54,6 +54,22 @@ export async function userSignupHandler(input) {
   // Hash the provided password
   const hashedPassword = await bcrypt.hash(input.password, 10);
 
+  const existingUser = await userHelper.getObjectByQuery({
+    query: { email: input.email },
+  });
+
+  if (existingUser) {
+    throw "User with this email already exists"
+  }
+
+  const existingUser2 = await userHelper.getObjectByQuery({
+    query: { phone: input.phone },
+  });
+
+  if (existingUser2) {
+    throw "User with this phone number already exists"
+  }
+
   let username = await generateUniqueUsername(input.name);
 
   // Prepare user data
