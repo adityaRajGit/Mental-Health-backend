@@ -128,7 +128,7 @@ export async function userLoginHandler(input) {
     email: user.email,
     username: user.username,
     _id: user._id,
-    profile_pic: newUser.profile_pic || ""
+    profile_pic: user.profile_pic || ""
   }
 
   const token = generateToken(userData, "user");
