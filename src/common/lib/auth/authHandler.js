@@ -73,7 +73,7 @@ export async function userSignupHandler(input) {
   let username = await generateUniqueUsername(input.name);
 
   // Prepare user data
-  const userData = {
+  const userDetails = {
     name: input.name,
     phone: input.phone,
     email: input.email,
@@ -82,10 +82,19 @@ export async function userSignupHandler(input) {
   };
 
   // Add the new user to the database
-  const newUser = await userHelper.addObject(userData);
+  const newUser = await userHelper.addObject(userDetails);
+
+  const userData = {
+    name: newUser.name,
+    phone: newUser.phone,
+    email: newUser.email,
+    username: newUser.username,
+    _id: newUser._id,
+    profile_pic: newUser.profile_pic || ""
+  }
 
   // Generate a token for the new user
-  const token = generateToken(newUser._id, USER);
+  const token = generateToken(userData, USER);
 
   // Return the user info and token
   return { user: getUserInfo(newUser), token };
@@ -113,7 +122,16 @@ export async function userLoginHandler(input) {
     throw new Error("Invalid credentials");
   }
 
-  const token = generateToken(user._id, "user");
+  const userData = {
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    username: user.username,
+    _id: user._id,
+    profile_pic: newUser.profile_pic || ""
+  }
+
+  const token = generateToken(userData, "user");
 
   return { user: getUserInfo(user), token };
 }
