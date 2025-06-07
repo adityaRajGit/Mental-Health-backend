@@ -8,7 +8,8 @@ import chalk from "../server/chalk";
 import cors from "cors";
 // import nodeCron from 'node-cron';
 // import axios from 'axios';
-
+import passport from "../util/passport";
+import session from "express-session";
 import serverConfig from "../server/config";
 import mainRoutes from "../server/routes/main.routes";
 import userRoutes from "../server/routes/user.routes";
@@ -102,6 +103,9 @@ app.use("/api/v1/comment", commentRoutes);
 app.use("/api/v1/share", shareRoutes);
 app.use("/api/v1/therapist",therapistRoutes);
 
+app.use(session({ secret: "your-session-secret", resave: false, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Swagger API documentation
 app.use(
