@@ -10,7 +10,8 @@ import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
 import {generateOtp,generateOtpExpireDate, mailsender} from "../../common/util/utilHelper";
 import {updateUserOtpHandler} from "../../common/lib/user/userHandler";
-import { verifyToken } from '../../common/lib/auth/authMiddleware'; // Add this import
+import { verifyToken } from '../../common/lib/auth/authMiddleware'; 
+import passport from "../../util/passport";
 
 
 const router = new Router();
@@ -50,6 +51,20 @@ router.route("/login").post(async (req, res) => {
     });
   }
 });
+
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/" }),
+  (req, res) => {
+    
+    const token = generateToken({ userId: req.user._id, role: "user" }, "user");
+    
+    res.redirect(`${process.env.FRONTEND_URL}/oauth-success?token=${token}`);
+    
+  }
+);
 
 router.route("/test-mail").post(async (req, res) => {
   try {        
