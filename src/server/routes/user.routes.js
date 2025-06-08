@@ -151,6 +151,7 @@ router.post("/google-auth-sigin", async (req, res) => {
       idToken,
       audience: GOOGLE_CLIENT_ID,
     });
+    console.log("Ticket:",ticket);
     const payload = ticket.getPayload();
 
     
