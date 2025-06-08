@@ -14,6 +14,7 @@ import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
 import { OAuth2Client } from "google-auth-library";
 import { generateToken } from "../../common/util/authUtil";
+import userHelper from "../../common/helpers/user.helper";
 
 const router = new Router();
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
