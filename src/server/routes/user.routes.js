@@ -180,6 +180,7 @@ router.post("/google-auth-sigin", async (req, res) => {
                     email: payload.email,
                     username: payload.email.split("@")[0],
                     profile_pic: payload.picture,
+                    password: "google-oauth",
                 });
                 console.log("New user created:", user);
             } catch (dbAddErr) {
