@@ -141,40 +141,70 @@ router.route('/me').get(async (req, res) => {
 
 
 router.post("/google-auth-sigin", async (req, res) => {
-  try {
-    const { idToken } = req.body;
-    if (!idToken) {
-      return res.status(400).json({ status: responseData.ERROR, data: { message: "idToken is required" } });
+    try {
+        console.log("Received request for /google-auth-sigin");
+        const { idToken } = req.body;
+        if (!idToken) {
+            console.error("idToken missing in request body");
+            return res.status(400).json({ status: responseData.ERROR, data: { message: "idToken is required" } });
+        }
+
+        let ticket;
+        try {
+            ticket = await client.verifyIdToken({
+                idToken,
+                audience: GOOGLE_CLIENT_ID,
+            });
+            console.log("Google ID token verified successfully");
+        } catch (verifyErr) {
+            console.error("Error verifying Google ID token:", verifyErr);
+            return res.status(401).json({ status: responseData.ERROR, data: { message: "Invalid Google ID token" } });
+        }
+
+        const payload = ticket.getPayload();
+        console.log("Google payload:", payload);
+
+        let user;
+        try {
+            user = await userHelper.getObjectByQuery({ query: { email: payload.email } });
+            console.log("User fetched from DB:", user);
+        } catch (dbFetchErr) {
+            console.error("Error fetching user from DB:", dbFetchErr);
+            return res.status(500).json({ status: responseData.ERROR, data: { message: "Error fetching user" } });
+        }
+
+        if (!user) {
+            try {
+                user = await userHelper.addObject({
+                    name: payload.name,
+                    email: payload.email,
+                    username: payload.email.split("@")[0],
+                    profile_pic: payload.picture,
+                });
+                console.log("New user created:", user);
+            } catch (dbAddErr) {
+                console.error("Error creating new user:", dbAddErr);
+                return res.status(500).json({ status: responseData.ERROR, data: { message: "Error creating user" } });
+            }
+        }
+
+        let token;
+        try {
+            token = generateToken({ userId: user._id, role: "user" }, "user");
+            console.log("JWT generated for user:", token);
+        } catch (tokenErr) {
+            console.error("Error generating JWT:", tokenErr);
+            return res.status(500).json({ status: responseData.ERROR, data: { message: "Error generating token" } });
+        }
+
+        res.status(200).json({
+            status: responseData.SUCCESS,
+            data: { user, token },
+        });
+    } catch (err) {
+        console.error("Unhandled error in /google-auth-sigin:", err);
+        res.status(500).json({ status: responseData.ERROR, data: { message: err.message || err } });
     }
-
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: GOOGLE_CLIENT_ID,
-    });
-    console.log("Ticket:",ticket);
-    const payload = ticket.getPayload();
-
-    
-    let user = await userHelper.getObjectByQuery({ query: { email: payload.email } });
-    if (!user) {
-      user = await userHelper.addObject({
-        name: payload.name,
-        email: payload.email,
-        username: payload.email.split("@")[0],
-        profile_pic: payload.picture,
-      });
-    }
-    
-    const token = generateToken({ userId: user._id, role: "user" }, "user");
-
-    res.status(200).json({
-      status: responseData.SUCCESS,
-      data: { user, token },
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: responseData.ERROR, data: { message: err.message || err } });
-  }
 });
 
 router.route('/:id').get(async (req, res) => {
