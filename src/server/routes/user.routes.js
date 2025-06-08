@@ -12,9 +12,12 @@ import {
 import serverConfig from '../../server/config';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
+import { OAuth2Client } from "google-auth-library";
+import { generateToken } from "../../common/util/authUtil";
 
 const router = new Router();
-
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 router.route('/list').post(async (req, res) => {
     try {
@@ -135,6 +138,42 @@ router.route('/me').get(async (req, res) => {
     }
 });
 
+
+router.post("/google-auth-sigin", async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ status: responseData.ERROR, data: { message: "idToken is required" } });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    
+    let user = await userHelper.getObjectByQuery({ query: { email: payload.email } });
+    if (!user) {
+      user = await userHelper.addObject({
+        name: payload.name,
+        email: payload.email,
+        username: payload.email.split("@")[0],
+        profile_pic: payload.picture,
+      });
+    }
+    
+    const token = generateToken({ userId: user._id, role: "user" }, "user");
+
+    res.status(200).json({
+      status: responseData.SUCCESS,
+      data: { user, token },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: responseData.ERROR, data: { message: err.message || err } });
+  }
+});
 
 router.route('/:id').get(async (req, res) => {
     try {
