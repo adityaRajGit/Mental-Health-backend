@@ -39,6 +39,7 @@
         "express": "^4.16.3",
         "express-session": "^1.18.1",
         "google-libphonenumber": "^3.2.15",
+        "googleapis": "^150.0.1",
         "handlebars": "^4.7.7",
         "jsonwebtoken": "^8.5.1",
         "jwt-decode": "^4.0.0",
