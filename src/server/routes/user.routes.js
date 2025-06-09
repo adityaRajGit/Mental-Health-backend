@@ -213,7 +213,7 @@ router.post("/google-signup", async (req, res) => {
     }
 });
 
-router.post("/google-login", async (req, res) => {
+router.post("/google-auth-sigin", async (req, res) => {
     const { idToken } = req.body;
 
     if (!idToken) {
