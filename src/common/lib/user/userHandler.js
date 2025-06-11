@@ -17,7 +17,7 @@ export async function getUserDetailsHandler(input) {
     return await userHelper.getObjectById(input);
 }
 
-export const getUserDetailsHandler = async (input) => {
+export const getUserDetailsHandlerV2 = async (input) => {
     try {
         const userId = typeof input === 'string' ? input : input.id;
         
