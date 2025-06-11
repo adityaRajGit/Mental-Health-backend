@@ -7,7 +7,8 @@ import {
     deleteUserHandler,
     getUserDetailsHandler,
     getUserListHandler,
-    updateUserDetailsHandler
+    updateUserDetailsHandler,
+    getUserDetailsHandlerV2
 } from '../../common/lib/user/userHandler';
 import serverConfig from '../../server/config';
 import responseStatus from "../../common/constants/responseStatus.json";
@@ -105,16 +106,16 @@ router.route('/me').get(async (req, res) => {
             });
         }
 
-        // Extract user ID from token payload
+        // Ensure userId is a string
         const userId = decoded.userId;
-        if (!userId) {
+        if (!userId || typeof userId !== 'string') {
             return res.status(401).send({
                 status: responseData.ERROR,
                 data: { message: "Invalid token structure" },
             });
         }
 
-        const gotUser = await getUserDetailsHandler({ id: userId });
+        const gotUser = await getUserDetailsHandlerV2({ id: userId });
         res.status(responseStatus.STATUS_SUCCESS_OK).send({
             status: responseData.SUCCESS,
             data: { user: gotUser },
