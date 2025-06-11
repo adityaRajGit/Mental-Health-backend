@@ -1,4 +1,4 @@
-const userHelper = require('../../helpers/user.helper');
+import userHelper from '../../helpers/user.helper.js';
 
 function generateUsername(name) {
     if (!name) return `user${Date.now()}`;
