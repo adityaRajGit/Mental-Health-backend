@@ -86,9 +86,6 @@ router.route('/new').post(async (req, res) => {
 
 router.route('/me').get(async (req, res) => {
     try {
-        console.log("Authorization Header:", req.headers.authorization);
-
-        // Check if the Authorization header is present
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return res.status(401).send({
@@ -97,35 +94,27 @@ router.route('/me').get(async (req, res) => {
             });
         }
 
-        // Extract the token
         const token = authHeader.split(" ")[1];
-        console.log("Token:", token);
-
-        // Verify the token
         let decoded;
         try {
-            decoded = jwt.verify(token, serverConfig.JWT_SECRET); // Use serverConfig.JWT_SECRET
+            decoded = jwt.verify(token, serverConfig.JWT_SECRET);
         } catch (err) {
-            console.error("Token verification failed:", err);
             return res.status(401).send({
                 status: responseData.ERROR,
                 data: { message: "Invalid or expired token" },
             });
         }
-        console.log("Decoded Token:", decoded);
 
-        // Fetch the user details
-        const gotUser = await getUserDetailsHandler({ id: decoded.userId });
-        console.log("Fetched User:", gotUser);
-
-        if (!gotUser) {
-            return res.status(404).send({
+        // Extract user ID from token payload
+        const userId = decoded.userId;
+        if (!userId) {
+            return res.status(401).send({
                 status: responseData.ERROR,
-                data: { message: "User not found" },
+                data: { message: "Invalid token structure" },
             });
         }
 
-        // Send the user details
+        const gotUser = await getUserDetailsHandler({ id: userId });
         res.status(responseStatus.STATUS_SUCCESS_OK).send({
             status: responseData.SUCCESS,
             data: { user: gotUser },
@@ -194,7 +183,11 @@ router.post("/google-signup", async (req, res) => {
             });
         }
 
-        const token = generateToken({ userId: user._id, role: user.role || "user" }, "user");
+        const tokenPayload = { 
+        userId: user._id.toString() // Ensure ID is a string
+        };
+
+        const token = generateToken(tokenPayload, "user");
 
         return res.status(200).json({
             status: responseData.SUCCESS,
@@ -246,7 +239,7 @@ router.post("/google-auth-sigin", async (req, res) => {
             });
         }
 
-        const token = generateToken({ userId: user._id, role: user.role || "user" }, "user");
+        const token = generateToken({ userId: user._id.toString() }, "user");
 
         return res.status(200).json({
             status: responseData.SUCCESS,
