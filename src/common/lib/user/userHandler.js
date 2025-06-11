@@ -18,16 +18,21 @@ export async function getUserDetailsHandler(input) {
     return await userHelper.getObjectById(input);
 }
 
-export const getUserDetailsHandlerV2 = async (input) => {
+export const getUserDetailsHandler = async (input) => {
     try {
-        // Ensure we're using a string ID
         const userId = typeof input === 'string' ? input : input.id;
+        
+        if (!userId || typeof userId !== 'string') {
+            throw new Error('Invalid user ID');
+        }
+        
         const gotUser = await userHelper.getObjectById(userId);
         return gotUser;
     } catch (err) {
         throw err;
     }
 };
+
 export async function updateUserDetailsHandler(input) {
     return await userHelper.directUpdateObject(input.objectId, input.updateObject);
 }
