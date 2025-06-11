@@ -1,4 +1,4 @@
-import userHelper from '../../helpers/user.helper';
+const userHelper = require('../../helpers/user.helper');
 
 function generateUsername(name) {
     if (!name) return `user${Date.now()}`;
@@ -7,7 +7,6 @@ function generateUsername(name) {
 }
 
 export async function addNewUserHandler(input) {
-    // Auto-generate username if not provided
     if (!input.username && input.name) {
         input.username = generateUsername(input.name);
     }
