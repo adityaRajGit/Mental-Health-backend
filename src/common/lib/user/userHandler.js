@@ -25,7 +25,7 @@ export const getUserDetailsHandlerV2 = async (input) => {
             throw new Error('Invalid user ID');
         }
         
-        const gotUser = await userHelper.getObjectById(userId);
+        const gotUser = await userHelper.getObjectById({ id: userId });
         return gotUser;
     } catch (err) {
         throw err;
