@@ -106,7 +106,7 @@ router.route('/me').get(async (req, res) => {
             });
         }
 
-        // Ensure userId is a string
+        
         const userId = decoded.userId;
         if (!userId || typeof userId !== 'string') {
             return res.status(401).send({
@@ -115,7 +115,7 @@ router.route('/me').get(async (req, res) => {
             });
         }
 
-        const gotUser = await getUserDetailsHandlerV2({ id: userId });
+        const gotUser = await getUserDetailsHandler({ id: userId });
         res.status(responseStatus.STATUS_SUCCESS_OK).send({
             status: responseData.SUCCESS,
             data: { user: gotUser },
@@ -183,12 +183,11 @@ router.post("/google-signup", async (req, res) => {
                 password: "google-oauth",
             });
         }
-
-        const tokenPayload = { 
-        userId: user._id.toString() // Ensure ID is a string
-        };
-
-        const token = generateToken(tokenPayload, "user");
+const tokenPayload = { 
+  userId: user._id.toString(),
+  role: "user" // Add role directly to payload
+};
+const token = jwt.sign(tokenPayload, serverConfig.JWT_SECRET, { expiresIn: '7d' });
 
         return res.status(200).json({
             status: responseData.SUCCESS,
@@ -240,7 +239,11 @@ router.post("/google-auth-sigin", async (req, res) => {
             });
         }
 
-        const token = generateToken({ userId: user._id.toString() }, "user");
+        const tokenPayload = { 
+  userId: user._id.toString(),
+  role: "user" // Add role directly to payload
+};
+const token = jwt.sign(tokenPayload, serverConfig.JWT_SECRET, { expiresIn: '7d' });
 
         return res.status(200).json({
             status: responseData.SUCCESS,
