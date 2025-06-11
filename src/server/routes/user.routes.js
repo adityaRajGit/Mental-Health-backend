@@ -115,7 +115,7 @@ router.route('/me').get(async (req, res) => {
             });
         }
 
-        const gotUser = await getUserDetailsHandler({ id: userId });
+        const gotUser = await getUserDetailsHandlerV2({ id: userId });
         res.status(responseStatus.STATUS_SUCCESS_OK).send({
             status: responseData.SUCCESS,
             data: { user: gotUser },
