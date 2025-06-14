@@ -4,6 +4,28 @@ export async function addNewAppointmentHandler(input) {
     return await appointmentHelper.addObject(input);
 }
 
+export async function getAllUpcomingAppointmentsHandler() {
+    const now = new Date();
+    return await appointmentHelper.getAllObjects({
+        query: {
+            scheduled_at: { $gte: now },
+            is_deleted: false
+        },
+        sort: { scheduled_at: 1 }
+    });
+}
+
+export async function getAllPastAppointmentsHandler() {
+    const now = new Date();
+    return await appointmentHelper.getAllObjects({
+        query: {
+            scheduled_at: { $lt: now },
+            is_deleted: false
+        },
+        sort: { scheduled_at: -1 }
+    });
+}
+
 export async function addNewAppointmentHandlerV2(input) {
     
     const meetLink = await createGoogleMeetEvent({
