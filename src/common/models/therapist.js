@@ -41,7 +41,19 @@ const therapistSchema = new Schema({
         },
         tuesday: {
             type: [Date]
-        }
+        },
+        wednesday: {
+            type: [Date]
+        },
+        thursday: {
+            type: [Date]
+        },
+        friday: {
+            type: [Date]
+        },
+        saturday: {
+            type: [Date]
+        },
     },
     languages: {
         type: [String],
