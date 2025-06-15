@@ -16,6 +16,7 @@ import responseData from "../../common/constants/responseData.json";
 import { OAuth2Client } from "google-auth-library";
 import { generateToken } from "../../common/util/authUtil";
 import userHelper from "../../common/helpers/user.helper";
+import { getTherapistsForUser } from '../../common/lib/user/userHandler';
 
 const router = new Router();
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -183,10 +184,12 @@ router.post("/google-signup", async (req, res) => {
                 password: "google-oauth",
             });
         }
+
 const tokenPayload = { 
   userId: user._id.toString(),
-  role: "user" // Add role directly to payload
+  role: "user" 
 };
+
 const token = jwt.sign(tokenPayload, serverConfig.JWT_SECRET, { expiresIn: '7d' });
 
         return res.status(200).json({
@@ -281,6 +284,21 @@ router.route('/:id').get(async (req, res) => {
         console.log(err)
         res.status(responseStatus.INTERNAL_SERVER_ERROR);
         res.send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
+router.get('/:userId/therapists', async (req, res) => {
+    try {
+        const therapists = await getTherapistsForUser(req.params.userId);
+        res.status(responseStatus.STATUS_SUCCESS_OK).send({
+            status: responseData.SUCCESS,
+            data: { therapists }
+        });
+    } catch (err) {
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
             status: responseData.ERROR,
             data: { message: err }
         });
