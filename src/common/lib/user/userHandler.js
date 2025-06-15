@@ -1,4 +1,6 @@
 import userHelper from '../../helpers/user.helper.js';
+import appointmentHelper from '../../helpers/appointment.helper';
+import therapistHelper from '../../helpers/therapist.helper';
 
 function generateUsername(name) {
     if (!name) return `user${Date.now()}`;
@@ -32,6 +34,21 @@ export const getUserDetailsHandlerV2 = async (input) => {
         throw err;
     }
 };
+
+
+export async function getTherapistsForUser(userId) {
+    const appointments = await appointmentHelper.getAllObjects({
+        query: { user_id: userId, is_deleted: false }
+    });
+    const therapistIds = [
+        ...new Set(appointments.map(app => app.therapist_id.toString()))
+    ];
+    if (therapistIds.length === 0) return [];
+    const therapists = await therapistHelper.getAllObjects({
+        query: { _id: { $in: therapistIds }, is_deleted: false }
+    });
+    return therapists;
+}
 
 export async function updateUserDetailsHandler(input) {
     return await userHelper.directUpdateObject(input.objectId, input.updateObject);
