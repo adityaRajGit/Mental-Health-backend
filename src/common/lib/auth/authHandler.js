@@ -4,12 +4,17 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../../util/authUtil";
 import { getUserInfo } from "../../util/utilHelper";
 import { USER } from "../../constants/enum";
+import { OAuth2Client } from 'google-auth-library';
 import _ from "lodash";
 import {
   generateOtpExpireDate,
   generateOtp,
   mailsender,
 } from "../../util/utilHelper";
+import configVariables from "../../../server/config";
+import therapistHelper from "../../helpers/therapist.helper";
+
+const client = new OAuth2Client(configVariables.GOOGLE_CLIENT_ID);
 
 async function generateUniqueReferralCode() {
   let code;
@@ -33,7 +38,10 @@ async function generateUniqueUsername(fullName) {
     username = `${baseUsername}${randomNum}`;
 
     const exists = await userHelper.getObjectByQuery({ query: { username } });
+    const exists2 = await therapistHelper.getObjectByQuery({ query: { username } });
+
     if (!exists) break;
+    if (!exists2) break;
 
     attempt++;
     if (attempt > 10000) {
@@ -48,7 +56,7 @@ async function generateUniqueUsername(fullName) {
 export async function userSignupHandler(input) {
   // Validate input fields
   if (!input.name || !input.phone || !input.email || !input.password) {
-    throw new Error("All fields (name, phone, email, password) are required");
+    throw "All fields (name, phone, email, password) are required"
   }
 
   // Hash the provided password
@@ -88,6 +96,7 @@ export async function userSignupHandler(input) {
     name: newUser.name,
     phone: newUser.phone,
     email: newUser.email,
+    role: newUser.role,
     username: newUser.username,
     _id: newUser._id,
     profile_pic: newUser.profile_pic || ""
@@ -98,6 +107,99 @@ export async function userSignupHandler(input) {
 
   // Return the user info and token
   return { user: getUserInfo(newUser), token };
+}
+
+export async function userSignupHandlerGoogle(input) {
+  const { idToken, role } = input;
+
+  if (!idToken) {
+    throw "ID token is required";
+  }
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const {
+      sub: googleId,
+      email,
+      given_name: firstName,
+      family_name: lastName,
+      picture: profilePicture,
+      email_verified: emailVerified
+    } = payload;
+
+    if (role === 'user') {
+      let user = await userHelper.getObjectByQuery({
+        query: { googleId, email }
+      })
+
+      if (!user) {
+        let username;
+        let isUnique = false;
+        let attempts = 0;
+
+        while (!isUnique && attempts < 10) {
+          username = await generateUniqueUsername(`${firstName} ${lastName}`);
+          const existingUser = await userHelper.getObjectByQuery({ query: { username } });
+          if (!existingUser) {
+            isUnique = true;
+          }
+          attempts++;
+        }
+
+        user = await userHelper.addObject({
+          name: `${firstName} ${lastName}`,
+          email,
+          googleId,
+          profile_pic: profilePicture,
+          username,
+          email_verified: emailVerified
+        })
+      }
+
+      const token = generateToken(user, USER);
+
+      return { user: getUserInfo(user), token }
+    }
+    let user = await therapistHelper.getObjectByQuery({
+      query: { googleId, email }
+    })
+
+    if (!user) {
+      let username;
+      let isUnique = false;
+      let attempts = 0;
+
+      while (!isUnique && attempts < 10) {
+        username = await generateUniqueUsername(`${firstName} ${lastName}`);
+        const existingUser = await therapistHelper.getObjectByQuery({ query: { username } });
+        if (!existingUser) {
+          isUnique = true;
+        }
+        attempts++;
+      }
+
+      user = await therapistHelper.addObject({
+        name: `${firstName} ${lastName}`,
+        email,
+        googleId,
+        profile_pic: profilePicture,
+        username,
+        email_verified: emailVerified
+      })
+    }
+
+    const token = generateToken(user, 'therapist');
+
+    return { therapist: getUserInfo(user), token }
+  } catch (error) {
+    console.log(error);
+    throw error
+  }
 }
 
 export async function userLoginHandler(input) {
@@ -114,12 +216,12 @@ export async function userLoginHandler(input) {
   }
 
   if (!user) {
-    throw new Error("User not found");
+    throw "User not found"
   }
 
   const isMatch = await bcrypt.compare(input.password, user.password);
   if (!isMatch) {
-    throw new Error("Invalid credentials");
+    throw "Invalid credentials"
   }
 
   const userData = {
@@ -128,12 +230,61 @@ export async function userLoginHandler(input) {
     email: user.email,
     username: user.username,
     _id: user._id,
-    profile_pic: user.profile_pic || ""
+    role: user.role,
+    profile_pic: user.profile_pic || "",
   }
 
   const token = generateToken(userData, "user");
 
   return { user: getUserInfo(user), token };
+}
+
+export async function userLoginHandlerGoogle(input) {
+  const { idToken, role } = input;
+
+  if (!idToken) {
+    throw "ID token is required";
+  }
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const {
+      sub: googleId,
+    } = payload;
+
+    if (role === 'user') {
+      let user = await userHelper.getObjectByQuery({
+        query: { googleId }
+      })
+
+      if (!user) {
+        throw "User not found";
+      }
+
+      const token = generateToken(user, USER);
+
+      return { user: getUserInfo(user), token }
+    }
+    let user = await therapistHelper.getObjectByQuery({
+      query: { googleId }
+    })
+
+    if (!user) {
+      throw "Therapist not found";
+    }
+
+    const token = generateToken(user, 'therapist');
+
+    return { therapist: getUserInfo(user), token }
+  } catch (error) {
+    console.log(error);
+    throw error
+  }
 }
 
 export async function updateUserDetailsHandler(input) {
@@ -226,7 +377,6 @@ export async function verifyUserOtpHandler(email, otp) {
 
 export async function getUserByEmailPasswordHandler(input) {
   try {
-    console.log("Received input:", input);
 
     if (_.isEmpty(input.email) || _.isEmpty(input.password)) {
       throw "Email and password are required";
