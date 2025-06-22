@@ -45,6 +45,7 @@ const therapistSchema = new Schema({
             type: Number
         }
     },
+    bio: String,
     specialization: {
         type: [String]
     },
