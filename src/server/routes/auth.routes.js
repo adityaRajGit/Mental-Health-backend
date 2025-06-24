@@ -104,6 +104,29 @@ catch(err){
 }
 });
 
+router.post("/contact-support", async (req, res) => {
+  try {
+    const { name, email, company, numEmployees, message } = req.body;
+    if (!name || !email || !company || !numEmployees || !message) {
+      return res.status(400).json({
+        status: responseData.ERROR,
+        data: { message: "All fields are required" }
+      });
+    }
+    await sendContactSupportEmail({ name, email, company, numEmployees, message });
+    res.status(responseStatus.STATUS_SUCCESS_OK).json({
+      status: responseData.SUCCESS,
+      data: { message: "Support request sent successfully" }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+      status: responseData.ERROR,
+      data: { message: err.message || err }
+    });
+  }
+});
+
 router.route("/verify-email-otp").post(async (req, res) => {
   try {
     const { email, otp } = req.body;

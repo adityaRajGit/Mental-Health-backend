@@ -1,5 +1,6 @@
 
 import mongoose from 'mongoose';
+import { CONFIRMED, PENDING } from '../constants/enum';
 const Schema = mongoose.Schema;
 
 const appointmentSchema = new Schema({
@@ -25,6 +26,8 @@ const appointmentSchema = new Schema({
     }, 
     payment_status:{
         type:String,
+        enum: [CONFIRMED,PENDING],
+        default:PENDING
     },
     paymentId:{
         type:Schema.ObjectId
