@@ -6,7 +6,35 @@ const therapistSchema = new Schema({
         type: String,
         required: true
     },
-    profile_image: {
+    email: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    username: {
+        type: String,
+        unique: true,
+        trim: true
+    },
+
+    phone: {
+        type: String,
+        minlength: 10,
+        maxlength: 10,
+    },
+
+    password: {
+        type: String,
+        required: function () {
+            return !this.googleId // Password is required only if no social login ID are present
+        },
+        trim: true,
+    },
+    email_verified: {
+        type: Boolean,
+        default: false
+    },
+    profile_pic: {
         type: String
     },
     academic_background: {
@@ -17,6 +45,7 @@ const therapistSchema = new Schema({
             type: Number
         }
     },
+    bio: String,
     specialization: {
         type: [String]
     },
@@ -31,6 +60,12 @@ const therapistSchema = new Schema({
             type: String,
             enum: ['USD', 'INR']
         }
+    },
+    googleId: String,
+    role: {
+        type: String,
+        default: 'therapist',
+        required: true,
     },
     availability: {
         sunday: {

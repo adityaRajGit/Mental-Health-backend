@@ -4,7 +4,9 @@ import {
   userSignupHandler,
   userLoginHandler,
   verifyUserOtpHandler,
-  getUserByEmailHandler
+  getUserByEmailHandler,
+  userSignupHandlerGoogle,
+  userLoginHandlerGoogle
 } from "../../common/lib/auth/authHandler";
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
@@ -52,19 +54,41 @@ router.route("/login").post(async (req, res) => {
   }
 });
 
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/" }),
-  (req, res) => {
-    
-    const token = generateToken({ userId: req.user._id, role: "user" }, "user");
-    
-    res.redirect(`${process.env.FRONTEND_URL}/oauth-success?token=${token}`);
-    
+router.route("/google-auth").post(async (req, res) => {
+  try {
+    const result = await userSignupHandlerGoogle(req.body);
+    res.status(responseStatus.STATUS_SUCCESS_OK).json({
+      status: responseData.SUCCESS,
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+      status: responseData.ERROR,
+      data: { message: err.message || err },
+    });
   }
-);
+});
+
+
+router.route("/google-auth-sigin").post(async (req, res) => {
+  try {
+    const result = await userLoginHandlerGoogle(req.body);
+    res.status(responseStatus.STATUS_SUCCESS_OK).json({
+      status: responseData.SUCCESS,
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+      status: responseData.ERROR,
+      data: { message: err.message || err },
+    });
+  }
+});
+
+
 
 router.route("/test-mail").post(async (req, res) => {
   try {        
