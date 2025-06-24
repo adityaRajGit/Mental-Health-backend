@@ -149,3 +149,36 @@ export async function sendEmailNotification(email, subject, message) {
     console.log("Error sending email:", error);
   }
 }
+
+export async function sendContactSupportEmail({ name, email, company, numEmployees, message }) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: configVariables.EMAIL_USER,
+        pass: configVariables.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: configVariables.EMAIL_USER,
+      to: configVariables.EMAIL_USER, // send to your support inbox
+      subject: "New Contact/Support Request",
+      replyTo: email,
+      text: `
+        New Contact/Support Request
+
+        Name: ${name}
+        Work Email: ${email}
+        Company Name: ${company}
+        Number of Employees: ${numEmployees}
+        How can we help?: ${message}`.trim(),
+    };
+
+    await transporter.sendMail(mailOptions);
+    return { success: true, message: "Contact/support email sent successfully" };
+  } catch (error) {
+    console.error("Error sending contact/support email:", error);
+    throw error;
+  }
+}
