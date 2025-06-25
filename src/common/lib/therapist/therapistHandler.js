@@ -144,7 +144,7 @@ export async function therapistLoginHandler(input) {
     username: user.username,
     _id: user._id,
     role: user.role,
-    profile_pic: user.profile_pic || "",
+    profile_image: user.profile_image || "",
   }
 
   const token = generateToken(userData, "therapist");
@@ -158,6 +158,71 @@ export async function getTherapistDetailsHandler(input) {
 
 export async function updateTherapistDetailsHandler(input) {
   return await therapistHelper.directUpdateObject(input.objectId, input.updateObject);
+}
+
+export async function updateTherapistDetailsHandlerV2(input) {
+  
+  if (input.files && input.files.img) {
+    input.images = input.files.img.map(file => ({ path: file.path }));
+  }
+
+  let imageUrls = [];
+
+  if (input.images && input.images.length > 0) {
+    for (const image of input.images) {
+      const result = await cloudinary.uploader.upload(image.path, {
+        folder: "therapist",
+      });
+      imageUrls.push(result.secure_url);
+    }
+  }
+
+  if (imageUrls.length > 0) {
+    input.updateObject.profile_image = imageUrls[0];
+  }
+
+  return await therapistHelper.directUpdateObject(input.objectId, input.updateObject);
+}
+
+export function calculateTherapistProfileCompletion(therapist) {
+  
+  const fields = [
+    'name',
+    'email',
+    'username',
+    'phone',
+    'profile_image',
+    'academic_background.qualification',
+    'academic_background.years_of_experience',
+    'bio',
+    'specialization',
+    'session_details.duration',
+    'session_details.cost',
+    'session_details.currency',
+    'languages',
+    'location.city',
+    'location.country'
+  ];
+
+  let filled = 0;
+
+  fields.forEach(field => {
+    const parts = field.split('.');
+    let value = therapist;
+    for (const part of parts) {
+      value = value?.[part];
+      if (value === undefined || value === null) break;
+    }
+    
+    if (Array.isArray(value)) {
+      if (value.length > 0) filled++;
+    } else if (value !== undefined && value !== null && value !== '') {
+      filled++;
+    }
+  });
+
+  const percent = Math.round((filled / fields.length) * 100);
+  return percent;
 }
 
 export async function getTherapistListHandler(input) {

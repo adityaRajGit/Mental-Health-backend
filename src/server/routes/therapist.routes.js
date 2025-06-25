@@ -8,9 +8,11 @@ import {
     getTherapistDetailsHandler,
     getTherapistListHandler,
     updateTherapistDetailsHandler,
+    updateTherapistDetailsHandlerV2,
     addNewTherapistHandlerV2,
     therapistSignupHandler,
-    therapistLoginHandler
+    therapistLoginHandler,
+    calculateTherapistProfileCompletion
 } from '../../common/lib/therapist/therapistHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
@@ -117,10 +119,15 @@ router.route('/new').post(async (req, res) => {
 
 router.post("/add-therapist", upload.fields([{ name: "img", maxCount: 5 }]), async (req, res) => {
     try {
+        let therapistData = req.body.therapist || req.body;
+        if (typeof therapistData === 'string') {
+            therapistData = JSON.parse(therapistData);
+        }
+        
         const files = req.files;
-        const therapistData = req.body;
-
-        const outputResult = await addNewTherapistHandlerV2({ ...therapistData, files });
+        const inputData = { ...therapistData, files };
+        
+        const outputResult = await addNewTherapistHandlerV2(inputData);
         res.status(200).send({
             status: "SUCCESS",
             data: { therapist: outputResult || {} }
@@ -129,6 +136,28 @@ router.post("/add-therapist", upload.fields([{ name: "img", maxCount: 5 }]), asy
         console.error(err);
         res.status(500).send({ status: "ERROR", data: { message: err.message } });
     }
+});
+
+router.get('/:id/profile-completion', async (req, res) => {
+  try {
+    const therapist = await getTherapistDetailsHandler({ id: req.params.id });
+    if (!therapist) {
+      return res.status(404).json({
+        status: "Error",
+        data: { message: "Therapist not found" }
+      });
+    }
+    const percent = calculateTherapistProfileCompletion(therapist);
+    res.status(200).json({
+      status: "Success",
+      data: { percent }
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "Error",
+      data: { message: err.message }
+    });
+  }
 });
 
 router.route('/:id').get(async (req, res) => {
@@ -155,32 +184,37 @@ router.route('/:id').get(async (req, res) => {
     }
 });
 
-router.route('/:id/update').post(async (req, res) => {
-    try {
-        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.therapist)) {
-            let input = {
-                objectId: req.params.id,
-                updateObject: req.body.therapist
-            }
-            const updateObjectResult = await updateTherapistDetailsHandler(input);
-            res.status(responseStatus.STATUS_SUCCESS_OK);
-            res.send({
-                status: responseData.SUCCESS,
-                data: {
-                    therapist: updateObjectResult ? updateObjectResult : {}
-                }
-            });
-        } else {
-            throw 'no body or id param sent'
+router.post('/:id/update', upload.fields([{ name: 'img', maxCount: 5 }]), async (req, res) => {
+  try {
+    if (!_.isEmpty(req.params.id) && req.body.therapist) {
+      let therapistData = req.body.therapist;
+      if (typeof therapistData === 'string') {
+        therapistData = JSON.parse(therapistData);
+      }
+      
+      const files = req.files;
+      let input = {
+        objectId: req.params.id,
+        updateObject: therapistData,
+        files
+      };
+      const updateObjectResult = await updateTherapistDetailsHandlerV2(input);
+      res.status(responseStatus.STATUS_SUCCESS_OK).send({
+        status: responseData.SUCCESS,
+        data: {
+          therapist: updateObjectResult ? updateObjectResult : {}
         }
-    } catch (err) {
-        console.log(err)
-        res.status(responseStatus.INTERNAL_SERVER_ERROR);
-        res.send({
-            status: responseData.ERROR,
-            data: { message: err }
-        });
+      });
+    } else {
+      throw 'no body or id param sent';
     }
+  } catch (err) {
+    console.log(err);
+    res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
+      status: responseData.ERROR,
+      data: { message: err }
+    });
+  }
 });
 
 router.route('/:id/remove').post(async (req, res) => {

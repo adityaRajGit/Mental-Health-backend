@@ -34,7 +34,7 @@ const therapistSchema = new Schema({
         type: Boolean,
         default: false
     },
-    profile_pic: {
+    profile_image: {
         type: String
     },
     academic_background: {
