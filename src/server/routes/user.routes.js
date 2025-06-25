@@ -178,7 +178,7 @@ router.post("/google-signup", async (req, res) => {
                 email,
                 role: role || "user",
                 name: `${firstName} ${lastName}`,
-                profile_pic: profilePicture,
+                profile_image: profilePicture,
                 emailVerified,
                 username,
                 password: "google-oauth",

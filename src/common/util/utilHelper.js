@@ -17,7 +17,7 @@ export function getUserInfo(user) {
     name: user.name,
     username: user.username,
     email: user.email,
-    profile_pic: user.profile_pic,
+    profile_image: user.profile_image,
     created_at: user.created_at
   };
 }

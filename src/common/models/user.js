@@ -34,7 +34,7 @@ const userSchema = new Schema({
         trim: true,
     },
 
-    profile_pic: {
+    profile_image: {
         type: String
     },
     email_verified: {

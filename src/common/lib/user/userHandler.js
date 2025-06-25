@@ -9,9 +9,30 @@ function generateUsername(name) {
 }
 
 export async function addNewUserHandler(input) {
+
     if (!input.username && input.name) {
         input.username = generateUsername(input.name);
     }
+
+    if (input.files && input.files.img) {
+    input.images = input.files.img.map(file => ({ path: file.path }));
+    }
+
+    let imageUrls = [];
+
+    if (input.images && input.images.length > 0) {
+        for (const image of input.images) {
+        const result = await cloudinary.uploader.upload(image.path, {
+            folder: "user",
+        });
+        imageUrls.push(result.secure_url);
+        }
+    }
+
+    if (imageUrls.length > 0) {
+        input.profile_image = imageUrls[0];
+    }
+
     return await userHelper.addObject(input);
 }
 
@@ -51,6 +72,24 @@ export async function getTherapistsForUser(userId) {
 }
 
 export async function updateUserDetailsHandler(input) {
+     if (input.files && input.files.img) {
+    input.images = input.files.img.map(file => ({ path: file.path }));
+  }
+
+  let imageUrls = [];
+
+  if (input.images && input.images.length > 0) {
+    for (const image of input.images) {
+      const result = await cloudinary.uploader.upload(image.path, {
+        folder: "user",
+      });
+      imageUrls.push(result.secure_url);
+    }
+  }
+
+  if (imageUrls.length > 0) {
+    input.updateObject.profile_image = imageUrls[0];
+  }
     return await userHelper.directUpdateObject(input.objectId, input.updateObject);
 }
 

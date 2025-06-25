@@ -99,7 +99,7 @@ export async function userSignupHandler(input) {
     role: newUser.role,
     username: newUser.username,
     _id: newUser._id,
-    profile_pic: newUser.profile_pic || ""
+    profile_image: newUser.profile_image || ""
   }
 
   // Generate a token for the new user
@@ -155,7 +155,7 @@ export async function userSignupHandlerGoogle(input) {
           name: `${firstName} ${lastName}`,
           email,
           googleId,
-          profile_pic: profilePicture,
+          profile_image: profilePicture,
           username,
           email_verified: emailVerified
         })
@@ -187,7 +187,7 @@ export async function userSignupHandlerGoogle(input) {
         name: `${firstName} ${lastName}`,
         email,
         googleId,
-        profile_pic: profilePicture,
+        profile_image: profilePicture,
         username,
         email_verified: emailVerified
       })
@@ -231,7 +231,7 @@ export async function userLoginHandler(input) {
     username: user.username,
     _id: user._id,
     role: user.role,
-    profile_pic: user.profile_pic || "",
+    profile_image: user.profile_image || "",
   }
 
   const token = generateToken(userData, "user");
