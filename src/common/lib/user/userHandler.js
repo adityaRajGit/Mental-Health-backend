@@ -1,6 +1,7 @@
 import userHelper from '../../helpers/user.helper.js';
 import appointmentHelper from '../../helpers/appointment.helper';
 import therapistHelper from '../../helpers/therapist.helper';
+import { v2 as cloudinary } from "cloudinary";
 
 function generateUsername(name) {
     if (!name) return `user${Date.now()}`;
@@ -15,17 +16,17 @@ export async function addNewUserHandler(input) {
     }
 
     if (input.files && input.files.img) {
-    input.images = input.files.img.map(file => ({ path: file.path }));
+        input.images = input.files.img.map(file => ({ path: file.path }));
     }
 
     let imageUrls = [];
 
     if (input.images && input.images.length > 0) {
         for (const image of input.images) {
-        const result = await cloudinary.uploader.upload(image.path, {
-            folder: "user",
-        });
-        imageUrls.push(result.secure_url);
+            const result = await cloudinary.uploader.upload(image.path, {
+                folder: "user",
+            });
+            imageUrls.push(result.secure_url);
         }
     }
 
@@ -44,11 +45,11 @@ export async function getUserDetailsHandler(input) {
 export const getUserDetailsHandlerV2 = async (input) => {
     try {
         const userId = typeof input === 'string' ? input : input.id;
-        
+
         if (!userId || typeof userId !== 'string') {
             throw new Error('Invalid user ID');
         }
-        
+
         const gotUser = await userHelper.getObjectById({ id: userId });
         return gotUser;
     } catch (err) {
@@ -72,24 +73,24 @@ export async function getTherapistsForUser(userId) {
 }
 
 export async function updateUserDetailsHandler(input) {
-     if (input.files && input.files.img) {
-    input.images = input.files.img.map(file => ({ path: file.path }));
-  }
-
-  let imageUrls = [];
-
-  if (input.images && input.images.length > 0) {
-    for (const image of input.images) {
-      const result = await cloudinary.uploader.upload(image.path, {
-        folder: "user",
-      });
-      imageUrls.push(result.secure_url);
+    if (input.files && input.files.img) {
+        input.images = input.files.img.map(file => ({ path: file.path }));
     }
-  }
 
-  if (imageUrls.length > 0) {
-    input.updateObject.profile_image = imageUrls[0];
-  }
+    let imageUrls = [];
+
+    if (input.images && input.images.length > 0) {
+        for (const image of input.images) {
+            const result = await cloudinary.uploader.upload(image.path, {
+                folder: "user",
+            });
+            imageUrls.push(result.secure_url);
+        }
+    }
+
+    if (imageUrls.length > 0) {
+        input.updateObject.profile_image = imageUrls[0];
+    }
     return await userHelper.directUpdateObject(input.objectId, input.updateObject);
 }
 

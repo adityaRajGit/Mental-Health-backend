@@ -1,7 +1,8 @@
 
 import _ from 'lodash';
-import {Router} from 'express';
+import { Router } from 'express';
 import jwt from "jsonwebtoken";
+import multer from 'multer';
 import {
     addNewUserHandler,
     deleteUserHandler,
@@ -17,6 +18,9 @@ import { OAuth2Client } from "google-auth-library";
 import { generateToken } from "../../common/util/authUtil";
 import userHelper from "../../common/helpers/user.helper";
 import { getTherapistsForUser } from '../../common/lib/user/userHandler';
+import { storage } from "../../util/cloudinary.js";
+
+const upload = multer({ storage, limits: { fileSize: 500 * 1024 * 1024 } });
 
 const router = new Router();
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -24,47 +28,47 @@ const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 router.route('/list').post(async (req, res) => {
     try {
-      let filter = {};
-      filter.query = {};
-  
-      const inputData = { ...req.body };
-      if (inputData) {
-        filter.pageNum = inputData.pageNum ? inputData.pageNum : 1;
-        filter.pageSize = inputData.pageSize ? inputData.pageSize : 50;
-  
-        if (inputData.filters) {
-          filter.query = inputData.filters;
+        let filter = {};
+        filter.query = {};
+
+        const inputData = { ...req.body };
+        if (inputData) {
+            filter.pageNum = inputData.pageNum ? inputData.pageNum : 1;
+            filter.pageSize = inputData.pageSize ? inputData.pageSize : 50;
+
+            if (inputData.filters) {
+                filter.query = inputData.filters;
+            }
+        } else {
+            filter.pageNum = 1;
+            filter.pageSize = 50;
         }
-      } else {
-        filter.pageNum = 1;
-        filter.pageSize = 50;
-      }
-  
-      filter.query = { ...filter.query };
-  
-      const outputResult = await getUserListHandler(filter);
-      res.status(responseStatus.STATUS_SUCCESS_OK);
-      res.send({
-        status: responseData.SUCCESS,
-        data: {
-          userList: outputResult.list ? outputResult.list : [],
-          userCount: outputResult.count ? outputResult.count : 0,
-        },
-      });
+
+        filter.query = { ...filter.query };
+
+        const outputResult = await getUserListHandler(filter);
+        res.status(responseStatus.STATUS_SUCCESS_OK);
+        res.send({
+            status: responseData.SUCCESS,
+            data: {
+                userList: outputResult.list ? outputResult.list : [],
+                userCount: outputResult.count ? outputResult.count : 0,
+            },
+        });
     } catch (err) {
-      console.log(err);
-      res.status(responseStatus.INTERNAL_SERVER_ERROR);
-      res.send({
-        status: responseData.ERROR,
-        data: { message: err },
-      });
+        console.log(err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err },
+        });
     }
-  });
+});
 
 
 router.route('/new').post(async (req, res) => {
     try {
-       if (!_.isEmpty(req.body)) {
+        if (!_.isEmpty(req.body)) {
             const outputResult = await addNewUserHandler(req.body.user);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
@@ -107,7 +111,7 @@ router.route('/me').get(async (req, res) => {
             });
         }
 
-        
+
         const userId = decoded.userId;
         if (!userId || typeof userId !== 'string') {
             return res.status(401).send({
@@ -185,12 +189,12 @@ router.post("/google-signup", async (req, res) => {
             });
         }
 
-const tokenPayload = { 
-  userId: user._id.toString(),
-  role: "user" 
-};
+        const tokenPayload = {
+            userId: user._id.toString(),
+            role: "user"
+        };
 
-const token = jwt.sign(tokenPayload, serverConfig.JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign(tokenPayload, serverConfig.JWT_SECRET, { expiresIn: '7d' });
 
         return res.status(200).json({
             status: responseData.SUCCESS,
@@ -242,11 +246,11 @@ router.post("/google-auth-sigin", async (req, res) => {
             });
         }
 
-        const tokenPayload = { 
-  userId: user._id.toString(),
-  role: "user" // Add role directly to payload
-};
-const token = jwt.sign(tokenPayload, serverConfig.JWT_SECRET, { expiresIn: '7d' });
+        const tokenPayload = {
+            userId: user._id.toString(),
+            role: "user" // Add role directly to payload
+        };
+        const token = jwt.sign(tokenPayload, serverConfig.JWT_SECRET, { expiresIn: '7d' });
 
         return res.status(200).json({
             status: responseData.SUCCESS,
@@ -305,21 +309,24 @@ router.get('/:userId/therapists', async (req, res) => {
     }
 });
 
-router.route('/:id/update').post( async (req, res) => {
+router.route('/:id/update').post(upload.fields([{ name: 'img', maxCount: 5 }]), async (req, res) => {
     try {
-        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.user)) {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body)) {
+
+            const files = req.files;
             let input = {
                 objectId: req.params.id,
-                updateObject: req.body.user
-            }
+                updateObject: req.body,
+                files
+            };
             const updateObjectResult = await updateUserDetailsHandler(input);
             res.status(responseStatus.STATUS_SUCCESS_OK);
-                res.send({
-                    status: responseData.SUCCESS,
-                    data: {
-                        user: updateObjectResult ? updateObjectResult : {}
-                    }
-                });
+            res.send({
+                status: responseData.SUCCESS,
+                data: {
+                    user: updateObjectResult ? updateObjectResult : {}
+                }
+            });
         } else {
             throw 'no body or id param sent'
         }
@@ -333,7 +340,7 @@ router.route('/:id/update').post( async (req, res) => {
     }
 });
 
-router.route('/:id/remove').post(async(req, res) => {
+router.route('/:id/remove').post(async (req, res) => {
     try {
         if (req.params.id) {
             const deletedUser = await deleteUserHandler(req.params.id);
@@ -358,4 +365,4 @@ router.route('/:id/remove').post(async(req, res) => {
 });
 
 export default router;
-  
+

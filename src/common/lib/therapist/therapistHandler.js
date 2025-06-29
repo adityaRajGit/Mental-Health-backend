@@ -161,31 +161,90 @@ export async function updateTherapistDetailsHandler(input) {
 }
 
 export async function updateTherapistDetailsHandlerV2(input) {
-  
-  if (input.files && input.files.img) {
-    input.images = input.files.img.map(file => ({ path: file.path }));
-  }
+  try {
+    let imageUrls = [];
 
-  let imageUrls = [];
-
-  if (input.images && input.images.length > 0) {
-    for (const image of input.images) {
-      const result = await cloudinary.uploader.upload(image.path, {
-        folder: "therapist",
-      });
-      imageUrls.push(result.secure_url);
+    // Upload image(s) to Cloudinary
+    if (input.files && input.files.img) {
+      for (const file of input.files.img) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: 'therapist',
+        });
+        imageUrls.push(result.secure_url);
+      }
     }
-  }
 
-  if (imageUrls.length > 0) {
-    input.updateObject.profile_image = imageUrls[0];
-  }
+    // Set profile image if any were uploaded
+    if (imageUrls.length > 0) {
+      input.updateObject.profile_image = imageUrls[0];
+    }
 
-  return await therapistHelper.directUpdateObject(input.objectId, input.updateObject);
+    // Inline parsing of stringified/nested form data
+    const data = input.updateObject;
+
+    // Parse fields only if they exist (defensive parsing)
+    if (data.academic_background) {
+      if (typeof data.academic_background === 'string') {
+        data.academic_background = JSON.parse(data.academic_background);
+      }
+
+      if (data.academic_background.qualification && typeof data.academic_background.qualification === 'string') {
+        data.academic_background.qualification = JSON.parse(data.academic_background.qualification);
+      }
+
+      if (data.academic_background.years_of_experience) {
+        data.academic_background.years_of_experience = Number(data.academic_background.years_of_experience);
+      }
+    }
+
+    if (data.specialization && typeof data.specialization === 'string') {
+      data.specialization = JSON.parse(data.specialization);
+    }
+
+    if (data.experience && typeof data.experience === 'string') {
+      data.experience = JSON.parse(data.experience);
+    }
+
+    if (data.services && typeof data.services === 'string') {
+      data.services = JSON.parse(data.services);
+    }
+
+    if (data.languages && typeof data.languages === 'string') {
+      data.languages = JSON.parse(data.languages);
+    }
+
+    if (data.session_details) {
+      if (typeof data.session_details === 'string') {
+        data.session_details = JSON.parse(data.session_details);
+      }
+
+      if (data.session_details.cost) {
+        data.session_details.cost = Number(data.session_details.cost);
+      }
+
+      if (data.session_details.duration) {
+        data.session_details.duration = Number(data.session_details.duration);
+      }
+    }
+
+    if (data.location) {
+      if (typeof data.location === 'string') {
+        data.location = JSON.parse(data.location);
+      }
+    }
+
+    // Final DB update
+    return await therapistHelper.directUpdateObject(input.objectId, data);
+
+  } catch (error) {
+    console.error('Error in updateTherapistDetailsHandlerV2:', error);
+    throw error;
+  }
 }
 
+
 export function calculateTherapistProfileCompletion(therapist) {
-  
+
   const fields = [
     'name',
     'email',
@@ -213,7 +272,7 @@ export function calculateTherapistProfileCompletion(therapist) {
       value = value?.[part];
       if (value === undefined || value === null) break;
     }
-    
+
     if (Array.isArray(value)) {
       if (value.length > 0) filled++;
     } else if (value !== undefined && value !== null && value !== '') {
