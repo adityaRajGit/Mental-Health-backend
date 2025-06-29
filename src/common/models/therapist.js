@@ -58,7 +58,7 @@ const therapistSchema = new Schema({
         },
         currency: {
             type: String,
-            enum: ['USD', 'INR']
+            enum: ['$', '₹', '€', '£', '¥', '¥', 'A$', 'C$', 'CHF', 'S$', 'HK$', 'NZ$', 'kr', 'kr', 'kr', 'R', 'R$', '₽', '₩', 'Mex$', 'AED', '฿', 'RM', 'Rp', '₫']
         }
     },
     googleId: String,
@@ -92,7 +92,6 @@ const therapistSchema = new Schema({
     },
     languages: {
         type: [String],
-        enum: ['en', 'hi']
     },
     location: {
         city: {

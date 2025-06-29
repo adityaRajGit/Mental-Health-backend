@@ -123,10 +123,10 @@ router.post("/add-therapist", upload.fields([{ name: "img", maxCount: 5 }]), asy
         if (typeof therapistData === 'string') {
             therapistData = JSON.parse(therapistData);
         }
-        
+
         const files = req.files;
         const inputData = { ...therapistData, files };
-        
+
         const outputResult = await addNewTherapistHandlerV2(inputData);
         res.status(200).send({
             status: "SUCCESS",
@@ -139,25 +139,25 @@ router.post("/add-therapist", upload.fields([{ name: "img", maxCount: 5 }]), asy
 });
 
 router.get('/:id/profile-completion', async (req, res) => {
-  try {
-    const therapist = await getTherapistDetailsHandler({ id: req.params.id });
-    if (!therapist) {
-      return res.status(404).json({
-        status: "Error",
-        data: { message: "Therapist not found" }
-      });
+    try {
+        const therapist = await getTherapistDetailsHandler({ id: req.params.id });
+        if (!therapist) {
+            return res.status(404).json({
+                status: "Error",
+                data: { message: "Therapist not found" }
+            });
+        }
+        const percent = calculateTherapistProfileCompletion(therapist);
+        res.status(200).json({
+            status: "Success",
+            data: { percent }
+        });
+    } catch (err) {
+        res.status(500).json({
+            status: "Error",
+            data: { message: err.message }
+        });
     }
-    const percent = calculateTherapistProfileCompletion(therapist);
-    res.status(200).json({
-      status: "Success",
-      data: { percent }
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: "Error",
-      data: { message: err.message }
-    });
-  }
 });
 
 router.route('/:id').get(async (req, res) => {
@@ -185,36 +185,35 @@ router.route('/:id').get(async (req, res) => {
 });
 
 router.post('/:id/update', upload.fields([{ name: 'img', maxCount: 5 }]), async (req, res) => {
-  try {
-    if (!_.isEmpty(req.params.id) && req.body.therapist) {
-      let therapistData = req.body.therapist;
-      if (typeof therapistData === 'string') {
-        therapistData = JSON.parse(therapistData);
-      }
-      
-      const files = req.files;
-      let input = {
-        objectId: req.params.id,
-        updateObject: therapistData,
-        files
-      };
-      const updateObjectResult = await updateTherapistDetailsHandlerV2(input);
-      res.status(responseStatus.STATUS_SUCCESS_OK).send({
-        status: responseData.SUCCESS,
-        data: {
-          therapist: updateObjectResult ? updateObjectResult : {}
+    try {
+        if (!_.isEmpty(req.params.id) && req.body) {
+            let therapistData = req.body;
+            if (typeof therapistData === 'string') {
+                therapistData = JSON.parse(therapistData);
+            }
+            const files = req.files;
+            let input = {
+                objectId: req.params.id,
+                updateObject: therapistData,
+                files
+            };
+            const updateObjectResult = await updateTherapistDetailsHandlerV2(input);
+            res.status(responseStatus.STATUS_SUCCESS_OK).send({
+                status: responseData.SUCCESS,
+                data: {
+                    therapist: updateObjectResult ? updateObjectResult : {}
+                }
+            });
+        } else {
+            throw 'no body or id param sent';
         }
-      });
-    } else {
-      throw 'no body or id param sent';
+    } catch (err) {
+        console.log(err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
     }
-  } catch (err) {
-    console.log(err);
-    res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
-      status: responseData.ERROR,
-      data: { message: err }
-    });
-  }
 });
 
 router.route('/:id/remove').post(async (req, res) => {
