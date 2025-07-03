@@ -19,6 +19,7 @@ import commentRoutes from "../server/routes/comment.routes";
 import shareRoutes from "../server/routes/share.routes";
 import therapistRoutes from "../server/routes/therapist.routes";
 import appointmentRoutes from "../server/routes/appointment.routes";
+import blogRoutes from "../server/routes/blog.routes";
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
 // Initialize the Express App
@@ -103,7 +104,8 @@ app.use("/api/v1/post", postRoutes);
 app.use("/api/v1/comment", commentRoutes);
 app.use("/api/v1/share", shareRoutes);
 app.use("/api/v1/therapist",therapistRoutes);
-app.use("/api/v1/appointment",appointmentRoutes);
+app.use("/api/v1/appointment", appointmentRoutes);
+app.use("/api/v1/blog", blogRoutes);
 app.use(session({ secret: "your-session-secret", resave: false, saveUninitialized: true }));
 // app.use(passport.initialize());
 // app.use(passport.session());
