@@ -14,6 +14,7 @@ import {generateOtp,generateOtpExpireDate, mailsender} from "../../common/util/u
 import {updateUserOtpHandler} from "../../common/lib/user/userHandler";
 import { verifyToken } from '../../common/lib/auth/authMiddleware'; 
 import passport from "../../util/passport";
+import {sendContactSupportEmail} from "../../common/util/utilHelper";
 
 
 const router = new Router();
@@ -130,14 +131,14 @@ catch(err){
 
 router.post("/contact-support", async (req, res) => {
   try {
-    const { name, email, company, numEmployees, message } = req.body;
-    if (!name || !email || !company || !numEmployees || !message) {
+    const { name, email, phone, company, numEmployees, message } = req.body;
+    if (!name || !email || !phone || !company || !numEmployees || !message) {
       return res.status(400).json({
         status: responseData.ERROR,
         data: { message: "All fields are required" }
       });
     }
-    await sendContactSupportEmail({ name, email, company, numEmployees, message });
+    await sendContactSupportEmail({ name, email, phone, company, numEmployees, message });
     res.status(responseStatus.STATUS_SUCCESS_OK).json({
       status: responseData.SUCCESS,
       data: { message: "Support request sent successfully" }
