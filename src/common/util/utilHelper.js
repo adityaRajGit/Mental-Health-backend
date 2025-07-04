@@ -150,7 +150,7 @@ export async function sendEmailNotification(email, subject, message) {
   }
 }
 
-export async function sendContactSupportEmail({ name, email, company, numEmployees, message }) {
+export async function sendContactSupportEmail({ name, email,phone, company, numEmployees, message }) {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -162,7 +162,7 @@ export async function sendContactSupportEmail({ name, email, company, numEmploye
 
     const mailOptions = {
       from: configVariables.EMAIL_USER,
-      to: configVariables.EMAIL_USER, // send to your support inbox
+      to: "milind.unfiltered@gmail.com", // send to your support inbox
       subject: "New Contact/Support Request",
       replyTo: email,
       text: `
@@ -170,6 +170,7 @@ export async function sendContactSupportEmail({ name, email, company, numEmploye
 
         Name: ${name}
         Work Email: ${email}
+        Phone: ${phone}
         Company Name: ${company}
         Number of Employees: ${numEmployees}
         How can we help?: ${message}`.trim(),
