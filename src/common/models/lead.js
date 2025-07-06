@@ -34,6 +34,10 @@ const leadSchema = new Schema({
         type: String,
         trim: true
     },
+    boughtPackage:{
+        type:Boolean,
+        default:false
+    },
     is_deleted: {
         type: Boolean,
         default: false 
