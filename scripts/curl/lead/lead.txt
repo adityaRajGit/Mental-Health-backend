@@ -1,0 +1,63 @@
+CREATE
+
+curl --location '{{dev}}/api/v1/lead/new' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <token>' \
+--data-raw '{
+    "lead": {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "company": "Example Inc.",
+        "employees": "50-100",
+        "phone": "+1234567890",
+        "timeline": "Q3 2025",
+        "message": "Looking for a demo.",
+        "is_deleted": false,
+        "created_at": "2025-07-07T00:00:00.000Z",
+        "updated_at": "2025-07-07T00:00:00.000Z"
+    }
+}'
+
+LIST
+
+curl --location '{{dev}}/api/v1/lead/list' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <token>' \
+--data '{
+    "pageNum": 1,
+    "pageSize": 20,
+    "filters": {
+        "name": "John Doe",
+        "email": "john.doe@example.com"
+    }
+}'
+
+GET
+
+curl --location '{{dev}}/api/v1/lead/:lead_id' \
+--header 'Authorization: Bearer <token>'
+
+UPDATE
+
+curl --location '{{dev}}/api/v1/lead/:lead_id/update' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <token>' \
+--data '{
+    "lead": {
+        "name": "Jane Smith",
+        "email": "jane.smith@example.com",
+        "company": "New Company",
+        "employees": "100-200",
+        "phone": "+1987654321",
+        "timeline": "Q4 2025",
+        "message": "Updated message.",
+        "is_deleted": false,
+        "updated_at": "2025-07-07T00:00:00.000Z"
+    }
+}'
+
+DELETE
+
+curl --location --request POST '{{dev}}/api/v1/lead/:lead_id/remove' \
+--header 'Authorization: Bearer <token>'
+
