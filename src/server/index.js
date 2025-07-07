@@ -22,6 +22,7 @@ import appointmentRoutes from "../server/routes/appointment.routes";
 import blogRoutes from "../server/routes/blog.routes";
 import leadRoutes from "../server/routes/lead.routes";
 import adminRoutes from "../server/routes/admin.routes";
+import companyRoutes from "../server/routes/company.routes";
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
 // Initialize the Express App
@@ -109,6 +110,7 @@ app.use("/api/v1/appointment", appointmentRoutes);
 app.use("/api/v1/blog", blogRoutes);
 app.use("/api/v1/lead", leadRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/company", companyRoutes);
 app.use(session({ secret: "your-session-secret", resave: false, saveUninitialized: true }));
 // app.use(passport.initialize());
 // app.use(passport.session());
