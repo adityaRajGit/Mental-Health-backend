@@ -69,6 +69,7 @@ export async function adminLoginHandler(input) {
         name: admin.name,
         email: admin.email,
         role: admin.role,
+        _id: admin._id
     }
 
     const token = generateToken(adminData, "admin");
