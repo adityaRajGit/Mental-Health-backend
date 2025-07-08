@@ -8,45 +8,74 @@ export async function addNewAdminHandler(input) {
 }
 
 export async function addAdminHandler(input) {
-     // Validate input fields
-  if (!input.name || !input.role || !input.email || !input.password) {
-    throw "All fields (name, role, email, password) are required"
-  }
+    // Validate input fields
+    if (!input.name || !input.role || !input.email || !input.password) {
+        throw "All fields (name, role, email, password) are required"
+    }
 
-  // Hash the provided password
-  const hashedPassword = await bcrypt.hash(input.password, 10);
+    // Hash the provided password
+    const hashedPassword = await bcrypt.hash(input.password, 10);
 
-  const existingAdmin = await adminHelper.getObjectByQuery({
-    query: { email: input.email },
-  });
+    const existingAdmin = await adminHelper.getObjectByQuery({
+        query: { email: input.email },
+    });
 
-  if (existingAdmin) {
-    throw "Admin with this email already exists"
-  }
+    if (existingAdmin) {
+        throw "Admin with this email already exists"
+    }
 
-  // Prepare admin data
-  const adminDetails = {
-    name: input.name,
-    role: input.role,
-    email: input.email,
-    password: hashedPassword,
-  };
+    // Prepare admin data
+    const adminDetails = {
+        name: input.name,
+        role: input.role,
+        email: input.email,
+        password: hashedPassword,
+    };
 
-  // Add the new admin to the database
-  const newAdmin = await adminHelper.addObject(adminDetails);
+    // Add the new admin to the database
+    const newAdmin = await adminHelper.addObject(adminDetails);
 
-  const adminData = {
-    name: newAdmin.name,
-    role: newAdmin.role,
-    email: newAdmin.email,
-  }
+    const adminData = {
+        name: newAdmin.name,
+        role: newAdmin.role,
+        email: newAdmin.email,
+    }
 
-  // Generate a token for the new admin
-  const token = generateToken(adminData, 'admin');
+    // Generate a token for the new admin
+    const token = generateToken(adminData, 'admin');
 
-  // Return the admin info and token
-  return { admin: getAdminInfo(newAdmin), token };
+    // Return the admin info and token
+    return { admin: getAdminInfo(newAdmin), token };
 }
+
+export async function adminLoginHandler(input) {
+    let admin;
+
+    admin = await adminHelper.getObjectByQuery({
+        query: { email: input.email },
+    });
+
+
+    if (!admin) {
+        throw "Admin not found"
+    }
+
+    const isMatch = await bcrypt.compare(input.password, admin.password);
+    if (!isMatch) {
+        throw "Invalid credentials"
+    }
+
+    const adminData = {
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+    }
+
+    const token = generateToken(adminData, "admin");
+
+    return { admin: getAdminInfo(adminData), token };
+}
+
 
 export async function getAdminDetailsHandler(input) {
     return await adminHelper.getObjectById(input);
