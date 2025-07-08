@@ -3,6 +3,7 @@ import _ from 'lodash';
 import {Router} from 'express';
 
 import {
+    addAdminHandler,
     addNewAdminHandler,
     deleteAdminHandler,
     getAdminDetailsHandler,
@@ -58,6 +59,30 @@ router.route('/new').post(async (req, res) => {
     try {
        if (!_.isEmpty(req.body)) {
             const outputResult = await addNewAdminHandler(req.body.admin);
+            res.status(responseStatus.STATUS_SUCCESS_OK);
+            res.send({
+                status: responseData.SUCCESS,
+                data: {
+                    admin: outputResult ? outputResult : {}
+                }
+            });
+        } else {
+            throw 'no request body sent'
+        }
+    } catch (err) {
+        console.log(err)
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
+router.route('/add-admin').post(async (req, res) => {
+    try {
+       if (!_.isEmpty(req.body)) {
+            const outputResult = await addAdminHandler(req.body.admin);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
