@@ -156,8 +156,8 @@ router.route('/:id/remove').post(async(req, res) => {
 
 router.post('/add-lead', async (req, res) => {
   try {
-    const { name, email, phone, company, numEmployees, message } = req.body;
-    if (!name || !email || !phone || !company || !numEmployees || !message) {
+    const { name, email, phone, company, employees, message } = req.body;
+    if (!name || !email || !phone || !company || !employees) {
       return res.status(400).json({
         status: responseData.ERROR,
         data: { message: 'All fields are required' }
@@ -168,12 +168,12 @@ router.post('/add-lead', async (req, res) => {
       email,
       phone,
       company,
-      employees: numEmployees,
+      employees,
       message
     };
     await addNewLeadHandler(leadData);
     
-    await sendContactSupportEmail({ name, email, phone, company, numEmployees, message });
+    await sendContactSupportEmail({ name, email, phone, company, employees, message });
     res.status(responseStatus.STATUS_SUCCESS_OK).json({
       status: responseData.SUCCESS,
       data: { message: 'Support request sent successfully' }

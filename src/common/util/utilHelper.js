@@ -150,7 +150,7 @@ export async function sendEmailNotification(email, subject, message) {
   }
 }
 
-export async function sendContactSupportEmail({ name, email, phone, company, numEmployees, message }) {
+export async function sendContactSupportEmail({ name, email, phone, company, employees, message }) {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -172,7 +172,7 @@ export async function sendContactSupportEmail({ name, email, phone, company, num
         Work Email: ${email}
         Phone: ${phone}
         Company Name: ${company}
-        Number of Employees: ${numEmployees}
+        Number of Employees: ${employees}
         How can we help?: ${message}`.trim(),
     };
 
