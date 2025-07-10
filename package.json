@@ -15,7 +15,8 @@
         "build:all": "npm run clean && npm run build:server",
         "clean": "rimraf dist",
         "slate": "rimraf node_modules && npm install",
-        "lint": "eslint server"
+        "lint": "eslint server",
+        "test": "jest"
     },
     "dependencies": {
         "@sendgrid/mail": "^7.7.0",
@@ -76,6 +77,7 @@
         "@babel/core": "^7.20.12",
         "@babel/preset-env": "^7.20.2",
         "@babel/register": "^7.25.9",
+        "jest": "^30.0.4",
         "nodemon": "^1.19.4"
     }
 }
