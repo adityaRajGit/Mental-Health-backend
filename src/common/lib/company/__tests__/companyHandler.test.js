@@ -12,13 +12,14 @@ describe('companyHandler', () => {
     it('should add a new company and return the company object', async () => {
       const mockInput = {
         name: 'Example Company',
-        size: '51-200',
+        size: '201+',
         industry: 'Technology',
         website: 'https://example.com',
         address: '123 Main St, City, Country',
-        packageType: 'Standard',
+        packageType: 'Custom',
         webinarsCompleted: 2,
         webinarsScheduled: 1,
+        visibility: true,
         is_deleted: false,
         created_at: '2025-07-07T00:00:00.000Z',
         updated_at: '2025-07-07T00:00:00.000Z'

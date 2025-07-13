@@ -18,6 +18,8 @@ describe('leadHandler', () => {
         phone: '+1234567890',
         timeline: 'Q3 2025',
         message: 'Looking for a demo.',
+        boughtPackage: true,
+        status: 'client',
         is_deleted: false,
         created_at: '2025-07-07T00:00:00.000Z',
         updated_at: '2025-07-07T00:00:00.000Z'

@@ -38,6 +38,11 @@ const leadSchema = new Schema({
         type:Boolean,
         default:false
     },
+    status: {
+        type: String,
+        enum: ["lead", "client", "in progress"],
+        default: "lead"
+    },
     is_deleted: {
         type: Boolean,
         default: false 
