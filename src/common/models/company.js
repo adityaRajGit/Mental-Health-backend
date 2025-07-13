@@ -23,7 +23,7 @@ const companySchema = new Schema({
     },
     packageType: {
         type: String,
-        enum: ['Basic', 'Standard', 'Enterprise'],
+        enum: ['Basic', 'Standard', 'Enterprise','Custom'],
         required: true
     },
     webinarsCompleted: {
@@ -33,6 +33,10 @@ const companySchema = new Schema({
     webinarsScheduled: {
         type: Number,
         default: 0
+    },
+    visibility:{
+        type:Boolean,
+        default:false
     },
     is_deleted: {
         type: Boolean,
