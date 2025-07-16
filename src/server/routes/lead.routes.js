@@ -6,7 +6,8 @@ import {
     deleteLeadHandler,
     getLeadDetailsHandler,
     getLeadListHandler,
-    updateLeadDetailsHandler
+    updateLeadDetailsHandler,
+    updateLeadStatusHandler
 } from '../../common/lib/lead/leadHandler';
 import { sendContactSupportEmail } from "../../common/util/utilHelper"; 
 import responseStatus from "../../common/constants/responseStatus.json";
@@ -110,6 +111,34 @@ router.route('/:id/update').post( async (req, res) => {
                 updateObject: req.body.lead
             }
             const updateObjectResult = await updateLeadDetailsHandler(input);
+            res.status(responseStatus.STATUS_SUCCESS_OK);
+                res.send({
+                    status: responseData.SUCCESS,
+                    data: {
+                        lead: updateObjectResult ? updateObjectResult : {}
+                    }
+                });
+        } else {
+            throw 'no body or id param sent'
+        }
+    } catch (err) {
+        console.log(err)
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
+router.route('/:id/update-status').post( async (req, res) => {
+    try {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body)) {
+            let input = {
+                objectId: req.params.id,
+                updateObject: req.body
+            }
+            const updateObjectResult = await updateLeadStatusHandler(input);
             res.status(responseStatus.STATUS_SUCCESS_OK);
                 res.send({
                     status: responseData.SUCCESS,

@@ -9,11 +9,18 @@ const companySchema = new Schema({
     },
     size: {
         type: String,
-        enum: ['1-10', '11-50', '51-200', '201+'],
         required: true
     },
     industry: {
         type: String
+    },
+    company_mail: {
+        type: String
+    },
+    status: {
+        type: String,
+        enum: ['in_process', 'completed'],
+        default: 'in_process'
     },
     website: {
         type: String
@@ -23,7 +30,7 @@ const companySchema = new Schema({
     },
     packageType: {
         type: String,
-        enum: ['Basic', 'Standard', 'Enterprise','Custom'],
+        enum: ['Basic', 'Standard', 'Enterprise', 'Custom'],
         required: true
     },
     webinarsCompleted: {
@@ -34,9 +41,9 @@ const companySchema = new Schema({
         type: Number,
         default: 0
     },
-    visibility:{
-        type:Boolean,
-        default:false
+    visibility: {
+        type: Boolean,
+        default: false
     },
     is_deleted: {
         type: Boolean,
