@@ -7,7 +7,10 @@ describe('companyHandler', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-
+  // The tests use mocks for all companyHelper methods, so changes in the actual company model
+  // (e.g., schema changes in company.js) will not affect these tests.
+  // To ensure tests fail when the model changes, consider using integration tests
+  // or validating the shape of the returned objects more strictly in your tests.
   describe('addNewCompanyHandler', () => {
     it('should add a new company and return the company object', async () => {
       const mockInput = {

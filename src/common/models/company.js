@@ -28,9 +28,9 @@ const companySchema = new Schema({
     address: {
         type: String
     },
-    packageType: {
-        type: String,
-        enum: ['Basic', 'Standard', 'Enterprise', 'Custom'],
+    package: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Package',
         required: true
     },
     webinarsCompleted: {
