@@ -1,0 +1,158 @@
+
+import _ from 'lodash';
+import {Router} from 'express';
+
+import {
+    addNewPackageHandler,
+    deletePackageHandler,
+    getPackageDetailsHandler,
+    getPackageListHandler,
+    updatePackageDetailsHandler
+} from '../../common/lib/package/packageHandler';
+import responseStatus from "../../common/constants/responseStatus.json";
+import responseData from "../../common/constants/responseData.json";
+
+const router = new Router();
+
+router.route('/list').post(async (req, res) => {
+    try {
+      let filter = {};
+      filter.query = {};
+  
+      const inputData = { ...req.body };
+      if (inputData) {
+        filter.pageNum = inputData.pageNum ? inputData.pageNum : 1;
+        filter.pageSize = inputData.pageSize ? inputData.pageSize : 50;
+  
+        if (inputData.filters) {
+          filter.query = inputData.filters;
+        }
+      } else {
+        filter.pageNum = 1;
+        filter.pageSize = 50;
+      }
+  
+      filter.query = { ...filter.query };
+  
+      const outputResult = await getPackageListHandler(filter);
+      res.status(responseStatus.STATUS_SUCCESS_OK);
+      res.send({
+        status: responseData.SUCCESS,
+        data: {
+          packageList: outputResult.list ? outputResult.list : [],
+          packageCount: outputResult.count ? outputResult.count : 0,
+        },
+      });
+    } catch (err) {
+      console.log(err);
+      res.status(responseStatus.INTERNAL_SERVER_ERROR);
+      res.send({
+        status: responseData.ERROR,
+        data: { message: err },
+      });
+    }
+  });
+
+
+router.route('/new').post(async (req, res) => {
+    try {
+       if (!_.isEmpty(req.body)) {
+            const outputResult = await addNewPackageHandler(req.body.package);
+            res.status(responseStatus.STATUS_SUCCESS_OK);
+            res.send({
+                status: responseData.SUCCESS,
+                data: {
+                    package: outputResult ? outputResult : {}
+                }
+            });
+        } else {
+            throw 'no request body sent'
+        }
+    } catch (err) {
+        console.log(err)
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
+router.route('/:id').get(async (req, res) => {
+    try {
+        if (req.params.id) {
+            const gotPackage = await getPackageDetailsHandler(req.params);
+            res.status(responseStatus.STATUS_SUCCESS_OK);
+            res.send({
+                status: responseData.SUCCESS,
+                data: {
+                    package: gotPackage ? gotPackage : {}
+                }
+            });
+        } else {
+            throw 'no id param sent'
+        }
+    } catch (err) {
+        console.log(err)
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
+router.route('/:id/update').post( async (req, res) => {
+    try {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.package)) {
+            let input = {
+                objectId: req.params.id,
+                updateObject: req.body.package
+            }
+            const updateObjectResult = await updatePackageDetailsHandler(input);
+            res.status(responseStatus.STATUS_SUCCESS_OK);
+                res.send({
+                    status: responseData.SUCCESS,
+                    data: {
+                        package: updateObjectResult ? updateObjectResult : {}
+                    }
+                });
+        } else {
+            throw 'no body or id param sent'
+        }
+    } catch (err) {
+        console.log(err)
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
+router.route('/:id/remove').post(async(req, res) => {
+    try {
+        if (req.params.id) {
+            const deletedPackage = await deletePackageHandler(req.params.id);
+            res.status(responseStatus.STATUS_SUCCESS_OK);
+            res.send({
+                status: responseData.SUCCESS,
+                data: {
+                    hasPackageDeleted: true
+                }
+            });
+        } else {
+            throw 'no id param sent'
+        }
+    } catch (err) {
+        console.log(err)
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
+export default router;
+  
