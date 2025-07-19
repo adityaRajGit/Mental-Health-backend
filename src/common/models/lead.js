@@ -37,7 +37,7 @@ const leadSchema = new Schema({
     status: {
         type: String,
         enum: ["active", "inactive"],
-        default: "lead"
+        default: "active"
     },
     is_deleted: {
         type: Boolean,
