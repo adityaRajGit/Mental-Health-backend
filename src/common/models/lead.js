@@ -34,10 +34,19 @@ const leadSchema = new Schema({
         type: String,
         trim: true
     },
-    status: {
+    stage: {
         type: String,
-        enum: ["active", "inactive"],
-        default: "active"
+        enum: ["open", "proposal_sent", "negotiation", "closed_won", "closed_lost"],
+        default: "open"
+    },
+    source: {
+    type: String,
+    enum: ['website', 'referral', 'event', 'other'],
+    default: 'other'
+    },
+    notes:{
+        type:String,
+        trim: true
     },
     is_deleted: {
         type: Boolean,
