@@ -15,24 +15,21 @@ export async function updateLeadDetailsHandler(input) {
 
 export async function updateLeadStatusHandler(input) {
     try {
-        if (input.status === 'active') {
+        if (input.updateObject.stage === 'closed_won') {
             await leadHelper.deleteObjectById(input.objectId);
             const data = {
                 name: input.updateObject.name,
                 company_mail: input.updateObject.company_mail,
                 industry: input.updateObject.industry,
                 address: input.updateObject.address,
-                packageType: input.updateObject.package,
+                package: input.updateObject.package,
                 size: input.updateObject.size,
                 website: input.updateObject.website
             }
             const addCompany = await addNewCompanyHandler(data);
             return addCompany;
         } else {
-            const updateObject = {
-                status: 'inactive'
-            }
-            return await leadHelper.directUpdateObject(input.objectId, updateObject);
+            return await leadHelper.directUpdateObject(input.objectId, input.updateObject);
         }
     } catch (error) {
         console.log(error);

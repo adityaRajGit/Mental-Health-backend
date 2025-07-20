@@ -40,17 +40,17 @@ const leadSchema = new Schema({
         default: "open"
     },
     source: {
-    type: String,
-    enum: ['website', 'referral', 'event', 'other'],
-    default: 'other'
+        type: String,
+        enum: ['website', 'referral', 'event', 'other'],
+        default: 'other'
     },
-    notes:{
-        type:String,
+    notes: {
+        type: String,
         trim: true
     },
     is_deleted: {
         type: Boolean,
-        default: false 
+        default: false
     },
     created_at: {
         type: Date,
