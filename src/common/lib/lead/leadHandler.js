@@ -19,12 +19,12 @@ export async function updateLeadStatusHandler(input) {
             await leadHelper.deleteObjectById(input.objectId);
             const data = {
                 name: input.updateObject.name,
-                company_mail: input.updateObject.company_mail,
+                size: input.updateObject.size,
                 industry: input.updateObject.industry,
+                company_mail: input.updateObject.company_mail,
+                website: input.updateObject.website,
                 address: input.updateObject.address,
                 package: input.updateObject.package,
-                size: input.updateObject.size,
-                website: input.updateObject.website
             }
             const addCompany = await addNewCompanyHandler(data);
             return addCompany;
@@ -33,9 +33,8 @@ export async function updateLeadStatusHandler(input) {
         }
     } catch (error) {
         console.log(error);
-        throw error
+        throw error;
     }
-
 }
 
 export async function getLeadListHandler(input) {
