@@ -19,15 +19,21 @@ const packageSchema = new Schema({
     },
     max_webinars_per_month: {
         type: Number,
-        required: true
     },
     max_attendees_per_webinar: {
         type: Number,
-        required: true
     },
     max_duration_minutes: {
         type: Number,
-        required: true
+    },
+    max_sessions_per_month: {
+        type: Number,
+    },
+    max_sessions_minutes: {
+        type: Number,
+    },
+    timeLine:{
+        type: Number,
     },
     price: {
         type: Number,
