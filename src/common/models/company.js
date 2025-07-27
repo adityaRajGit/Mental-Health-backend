@@ -43,7 +43,7 @@ const companySchema = new Schema({
         type: Number,
         default: 0
     },
-    webinarsScheduled: {
+    sessionsCompleted: {
         type: Number,
         default: 0
     },
