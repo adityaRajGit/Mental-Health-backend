@@ -1,6 +1,6 @@
 
 import _ from 'lodash';
-import {Router} from 'express';
+import { Router } from 'express';
 
 import {
     addNewPackageHandler,
@@ -11,53 +11,54 @@ import {
 } from '../../common/lib/package/packageHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
+import protectRoutes from '../../common/util/protectRoutes';
 
 const router = new Router();
 
-router.route('/list').post(async (req, res) => {
+router.route('/list').post(protectRoutes.verifyAdmin, async (req, res) => {
     try {
-      let filter = {};
-      filter.query = {};
-  
-      const inputData = { ...req.body };
-      if (inputData) {
-        filter.pageNum = inputData.pageNum ? inputData.pageNum : 1;
-        filter.pageSize = inputData.pageSize ? inputData.pageSize : 50;
-  
-        if (inputData.filters) {
-          filter.query = inputData.filters;
+        let filter = {};
+        filter.query = {};
+
+        const inputData = { ...req.body };
+        if (inputData) {
+            filter.pageNum = inputData.pageNum ? inputData.pageNum : 1;
+            filter.pageSize = inputData.pageSize ? inputData.pageSize : 50;
+
+            if (inputData.filters) {
+                filter.query = inputData.filters;
+            }
+        } else {
+            filter.pageNum = 1;
+            filter.pageSize = 50;
         }
-      } else {
-        filter.pageNum = 1;
-        filter.pageSize = 50;
-      }
-  
-      filter.query = { ...filter.query };
-  
-      const outputResult = await getPackageListHandler(filter);
-      res.status(responseStatus.STATUS_SUCCESS_OK);
-      res.send({
-        status: responseData.SUCCESS,
-        data: {
-          packageList: outputResult.list ? outputResult.list : [],
-          packageCount: outputResult.count ? outputResult.count : 0,
-        },
-      });
+
+        filter.query = { ...filter.query };
+
+        const outputResult = await getPackageListHandler(filter);
+        res.status(responseStatus.STATUS_SUCCESS_OK);
+        res.send({
+            status: responseData.SUCCESS,
+            data: {
+                packageList: outputResult.list ? outputResult.list : [],
+                packageCount: outputResult.count ? outputResult.count : 0,
+            },
+        });
     } catch (err) {
-      console.log(err);
-      res.status(responseStatus.INTERNAL_SERVER_ERROR);
-      res.send({
-        status: responseData.ERROR,
-        data: { message: err },
-      });
+        console.log(err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err },
+        });
     }
-  });
+});
 
 
-router.route('/new').post(async (req, res) => {
+router.route('/new').post(protectRoutes.verifyAdmin, async (req, res) => {
     try {
-       if (!_.isEmpty(req.body)) {
-            const outputResult = await addNewPackageHandler(req.body.package);
+        if (!_.isEmpty(req.body)) {
+            const outputResult = await addNewPackageHandler(req.body);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
@@ -102,21 +103,21 @@ router.route('/:id').get(async (req, res) => {
     }
 });
 
-router.route('/:id/update').post( async (req, res) => {
+router.route('/:id/update').post(protectRoutes.verifyAdmin, async (req, res) => {
     try {
-        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.package)) {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body)) {
             let input = {
                 objectId: req.params.id,
-                updateObject: req.body.package
+                updateObject: req.body
             }
             const updateObjectResult = await updatePackageDetailsHandler(input);
             res.status(responseStatus.STATUS_SUCCESS_OK);
-                res.send({
-                    status: responseData.SUCCESS,
-                    data: {
-                        package: updateObjectResult ? updateObjectResult : {}
-                    }
-                });
+            res.send({
+                status: responseData.SUCCESS,
+                data: {
+                    package: updateObjectResult ? updateObjectResult : {}
+                }
+            });
         } else {
             throw 'no body or id param sent'
         }
@@ -130,7 +131,7 @@ router.route('/:id/update').post( async (req, res) => {
     }
 });
 
-router.route('/:id/remove').post(async(req, res) => {
+router.route('/:id/remove').post(protectRoutes.verifyAdmin, async (req, res) => {
     try {
         if (req.params.id) {
             const deletedPackage = await deletePackageHandler(req.params.id);
@@ -155,4 +156,4 @@ router.route('/:id/remove').post(async(req, res) => {
 });
 
 export default router;
-  
+
