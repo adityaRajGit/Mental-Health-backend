@@ -33,6 +33,12 @@ const companySchema = new Schema({
         ref: 'Package',
         required: true
     },
+    webinars: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'Webinar',
+        }
+    ],
     webinarsCompleted: {
         type: Number,
         default: 0
