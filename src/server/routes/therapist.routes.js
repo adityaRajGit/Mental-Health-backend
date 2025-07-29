@@ -12,7 +12,8 @@ import {
     addNewTherapistHandlerV2,
     therapistSignupHandler,
     therapistLoginHandler,
-    calculateTherapistProfileCompletion
+    calculateTherapistProfileCompletion,
+    recommendTherapists
 } from '../../common/lib/therapist/therapistHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
@@ -60,6 +61,21 @@ router.route('/list').post(async (req, res) => {
     }
 });
 
+router.post('/recommend', async (req, res) => {
+    try {
+        const recommendations = await recommendTherapists(req.body);
+        res.status(responseStatus.STATUS_SUCCESS_OK).send({
+            status: responseData.SUCCESS,
+            data: { recommendations: recommendations || [] }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
+            status: responseData.ERROR,
+            data: { message: err.message || err }
+        });
+    }
+});
 
 router.route("/signup").post(async (req, res) => {
     try {
