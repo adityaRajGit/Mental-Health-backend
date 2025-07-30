@@ -285,6 +285,8 @@ export function calculateTherapistProfileCompletion(therapist) {
 }
 
 export async function recommendTherapistsHandler(input) {
+  console.log("Starting recommendTherapistsHandler with input:", input);
+  
   const {
     specialization,
     language,
@@ -293,18 +295,32 @@ export async function recommendTherapistsHandler(input) {
     preferred_datetime
   } = input;
 
+  console.log("Extracted parameters:", { specialization, language, city, country, preferred_datetime });
+
   if (!specialization || !preferred_datetime) {
+    console.log("Validation failed: Missing required fields");
     throw "All fields [specialization and preferred_datetime] are required";
   }
 
+  console.log("Required field validation passed");
+
   const datetime = new Date(preferred_datetime);
   if (isNaN(datetime.getTime())) {
+    console.log("Date validation failed: Invalid preferred_datetime");
     throw "Invalid preferred_datetime";
   }
 
+  console.log("Date validation passed. Parsed datetime:", datetime);
+
   const dayOfWeek = datetime.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+  console.log("Day of week determined:", dayOfWeek);
 
   // Find therapists matching specialization and available on the given day
+  console.log("Querying therapists with criteria:", {
+    availabilityField: `availability.${dayOfWeek}`,
+    is_deleted: false
+  });
+
   const therapists = await therapistHelper.getAllObjects({
     query: {
       specialization: specialization,
@@ -313,38 +329,118 @@ export async function recommendTherapistsHandler(input) {
     }
   });
 
-  const hour = datetime.getHours();
-  const minute = datetime.getMinutes();
+  console.log(`Found ${therapists.length} therapists matching base criteria`);
+
+  const targetHour = datetime.getHours();
+  const targetMinute = datetime.getMinutes();
+  const targetTimeInMinutes = targetHour * 60 + targetMinute;
+  console.log("Target time slot:", { 
+    hour: targetHour, 
+    minute: targetMinute, 
+    timeString: `${targetHour.toString().padStart(2, '0')}:${targetMinute.toString().padStart(2, '0')}`,
+    totalMinutes: targetTimeInMinutes
+  });
+
+  // Helper function to convert "HH:MM" to minutes
+  const timeToMinutes = (timeStr) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Helper function to check if target time falls within a time range
+  const isTimeInRange = (targetMinutes, fromTime, toTime) => {
+    const fromMinutes = timeToMinutes(fromTime);
+    const toMinutes = timeToMinutes(toTime);
+    return targetMinutes >= fromMinutes && targetMinutes <= toMinutes;
+  };
 
   const scored = therapists.map(therapist => {
+    console.log(`Scoring therapist: ${therapist._id || therapist.id}`);
     let score = 0;
 
     // Language match
-    if (language && therapist.languages?.map(l => l.toLowerCase()).includes(language.toLowerCase())) score += 2;
+    if (language && therapist.languages?.map(l => l.toLowerCase()).includes(language.toLowerCase())) {
+      score += 2;
+      console.log(`  Language match bonus (+2): ${language}`);
+    } else if (language) {
+      console.log(`  No language match for: ${language}`);
+    }
 
     // City match
-    if (city && therapist.location?.city?.toLowerCase() === city.toLowerCase()) score += 0.5;
+    if (city && therapist.location?.city?.toLowerCase() === city.toLowerCase()) {
+      score += 0.5;
+      console.log(`  City match bonus (+0.5): ${city}`);
+    } else if (city) {
+      console.log(`  No city match for: ${city}`);
+    }
 
     // Country match
-    if (country && therapist.location?.country?.toLowerCase() === country.toLowerCase()) score += 1;
+    if (country && therapist.location?.country?.toLowerCase() === country.toLowerCase()) {
+      score += 1;
+      console.log(`  Country match bonus (+1): ${country}`);
+    } else if (country) {
+      console.log(`  No country match for: ${country}`);
+    }
 
-    // Time match (within the same hour and minute)
-    const availableTimes = therapist.availability?.[dayOfWeek] || [];
-    const timeMatch = availableTimes.some(dt => {
-      const slot = new Date(dt);
-      return slot.getHours() === hour && slot.getMinutes() === minute;
-    });
-    if (timeMatch) score += 2;
+    // Time range match - check if target time falls within any available time slot
+    const availableTimeSlots = therapist.availability?.[dayOfWeek] || [];
+    console.log(`  Available time slots for ${dayOfWeek}:`, availableTimeSlots);
+    
+    let timeMatch = false;
+    let matchingSlot = null;
+    
+    for (const slot of availableTimeSlots) {
+      if (slot.from && slot.to) {
+        const isInRange = isTimeInRange(targetTimeInMinutes, slot.from, slot.to);
+        console.log(`    Checking slot ${slot.from} - ${slot.to}: target ${targetHour.toString().padStart(2, '0')}:${targetMinute.toString().padStart(2, '0')} is ${isInRange ? 'within' : 'outside'} range`);
+        
+        if (isInRange) {
+          timeMatch = true;
+          matchingSlot = slot;
+          break;
+        }
+      } else {
+        console.log(`    Skipping invalid slot:`, slot);
+      }
+    }
+    
+    if (timeMatch) {
+      score += 2;
+      console.log(`  Time match bonus (+2): Found matching slot ${matchingSlot.from} - ${matchingSlot.to}`);
+    } else {
+      console.log(`  No time match found for target time ${targetHour.toString().padStart(2, '0')}:${targetMinute.toString().padStart(2, '0')}`);
+    }
 
+    console.log(`  Final score for therapist: ${score}`);
     return { therapist, score };
-  }).filter(entry => entry.score > 0);
+  }).filter(entry => {
+    const include = entry.score > 0;
+    console.log(`Filtering therapist with score ${entry.score}: ${include ? 'included' : 'excluded'}`);
+    return include;
+  });
 
-  scored.sort((a, b) => b.score - a.score);
+  console.log(`${scored.length} therapists remaining after filtering (score > 0)`);
+
+  scored.sort((a, b) => {
+    const result = b.score - a.score;
+    console.log(`Sorting: ${b.therapist._id || b.therapist.id} (${b.score}) vs ${a.therapist._id || a.therapist.id} (${a.score})`);
+    return result;
+  });
+
+  console.log("Therapists sorted by score (highest first)");
 
   // Return the top recommended therapist (or empty if none)
-  return {
+  const result = {
     recommendedTherapist: scored.length > 0 ? getUserInfo(scored[0].therapist) : null
   };
+
+  console.log("Final result:", {
+    hasRecommendation: result.recommendedTherapist !== null,
+    topScore: scored.length > 0 ? scored[0].score : 0,
+    totalCandidates: scored.length
+  });
+
+  return result;
 }
 
 export async function getTherapistListHandler(input) {
