@@ -57,7 +57,7 @@ router.route('/list').post(async (req, res) => {
 router.route('/new').post(async (req, res) => {
     try {
        if (!_.isEmpty(req.body)) {
-            const outputResult = await addNewWebinarHandler(req.body.webinar);
+            const outputResult = await addNewWebinarHandler(req.body);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
@@ -104,10 +104,10 @@ router.route('/:id').get(async (req, res) => {
 
 router.route('/:id/update').post( async (req, res) => {
     try {
-        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.webinar)) {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body)) {
             let input = {
                 objectId: req.params.id,
-                updateObject: req.body.webinar
+                updateObject: req.body
             }
             const updateObjectResult = await updateWebinarDetailsHandler(input);
             res.status(responseStatus.STATUS_SUCCESS_OK);
