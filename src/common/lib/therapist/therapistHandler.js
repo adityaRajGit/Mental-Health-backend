@@ -284,84 +284,68 @@ export function calculateTherapistProfileCompletion(therapist) {
   return percent;
 }
 
-export const recommendTherapists = async (req, res) => {
-    try {
-        const {
-            specialization,
-            language,
-            city,
-            country,
-            preferred_datetime
-        } = req.body;
+export async function recommendTherapistsHandler(input) {
+  const {
+    specialization,
+    language,
+    city,
+    country,
+    preferred_datetime
+  } = input;
 
-        if (!specialization || !preferred_datetime) {
-            return res.status(responseStatus.BAD_REQUEST).json({
-                status: responseData.ERROR,
-                data: { message: "All fields [specialization and preferred_datetime] are required" }
-            });
-        }
+  if (!specialization || !preferred_datetime) {
+    throw "All fields [specialization and preferred_datetime] are required";
+  }
 
-        const datetime = new Date(preferred_datetime);
-        if (isNaN(datetime.getTime())) {
-            return res.status(responseStatus.BAD_REQUEST).json({
-                status: responseData.ERROR,
-                data: { message: "Invalid preferred_datetime" }
-            });
-        }
+  const datetime = new Date(preferred_datetime);
+  if (isNaN(datetime.getTime())) {
+    throw "Invalid preferred_datetime";
+  }
 
-        const dayOfWeek = datetime.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+  const dayOfWeek = datetime.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
 
-        // Find therapists matching specialization and available on the given day
-        const therapists = await Therapist.find({
-            specialization: specialization,
-            [`availability.${dayOfWeek}`]: { $exists: true, $ne: [] },
-            is_deleted: false
-        });
-
-        // Score and filter therapists based on language, city, country, and time slot
-        const hour = datetime.getHours();
-        const minute = datetime.getMinutes();
-
-        const scored = therapists.map(therapist => {
-            let score = 0;
-
-            // Language match
-            if (therapist.languages?.map(l => l.toLowerCase()).includes(language.toLowerCase())) score += 2;
-
-            // City match
-            if (therapist.location?.city?.toLowerCase() === city.toLowerCase()) score += 0.5;
-
-            // Country match
-            if (therapist.location?.country?.toLowerCase() === country.toLowerCase()) score += 1;
-
-            // Time match (within the same hour)
-            const availableTimes = therapist.availability?.[dayOfWeek] || [];
-            const timeMatch = availableTimes.some(dt => {
-                const slot = new Date(dt);
-                return slot.getHours() === hour && slot.getMinutes() === minute;
-            });
-            if (timeMatch) score += 2;
-
-            return { therapist, score };
-        }).filter(entry => entry.score > 0);
-
-        scored.sort((a, b) => b.score - a.score);
-
-        const chosenTherapist = scored[0];
-
-        res.status(responseStatus.STATUS_SUCCESS_OK).json({
-            status: responseData.SUCCESS,
-            data: { recommendedTherapist: chosenTherapist }
-        });
-
-    } catch (err) {
-        console.error(err);
-        res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
-            status: responseData.ERROR,
-            data: { message: err.message || 'Internal server error' }
-        });
+  // Find therapists matching specialization and available on the given day
+  const therapists = await therapistHelper.getAllObjects({
+    query: {
+      specialization: specialization,
+      [`availability.${dayOfWeek}`]: { $exists: true, $ne: [] },
+      is_deleted: false
     }
-};
+  });
+
+  const hour = datetime.getHours();
+  const minute = datetime.getMinutes();
+
+  const scored = therapists.map(therapist => {
+    let score = 0;
+
+    // Language match
+    if (language && therapist.languages?.map(l => l.toLowerCase()).includes(language.toLowerCase())) score += 2;
+
+    // City match
+    if (city && therapist.location?.city?.toLowerCase() === city.toLowerCase()) score += 0.5;
+
+    // Country match
+    if (country && therapist.location?.country?.toLowerCase() === country.toLowerCase()) score += 1;
+
+    // Time match (within the same hour and minute)
+    const availableTimes = therapist.availability?.[dayOfWeek] || [];
+    const timeMatch = availableTimes.some(dt => {
+      const slot = new Date(dt);
+      return slot.getHours() === hour && slot.getMinutes() === minute;
+    });
+    if (timeMatch) score += 2;
+
+    return { therapist, score };
+  }).filter(entry => entry.score > 0);
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // Return the top recommended therapist (or empty if none)
+  return {
+    recommendedTherapist: scored.length > 0 ? getUserInfo(scored[0].therapist) : null
+  };
+}
 
 export async function getTherapistListHandler(input) {
   const list = await therapistHelper.getAllObjects(input);
