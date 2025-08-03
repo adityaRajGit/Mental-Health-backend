@@ -1,29 +1,6 @@
 import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
-const timeSlotSchema = new Schema({
-    from: {
-        type: String, // Format: "HH:MM" (24-hour format)
-        required: true,
-        validate: {
-            validator: function(v) {
-                return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
-            },
-            message: 'Time must be in HH:MM format (24-hour)'
-        }
-    },
-    to: {
-        type: String,
-        required: true,
-        validate: {
-            validator: function(v) {
-                return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
-            },
-            message: 'Time must be in HH:MM format (24-hour)'
-        }
-    }
-}, { _id: false });
-
 const therapistSchema = new Schema({
     name: {
         type: String,
@@ -89,36 +66,6 @@ const therapistSchema = new Schema({
         type: String,
         default: 'therapist',
         required: true,
-    },
-    availability: {
-        sunday: {
-            type: [timeSlotSchema],
-            default: []
-        },
-        monday: {
-            type: [timeSlotSchema],
-            default: []
-        },
-        tuesday: {
-            type: [timeSlotSchema],
-            default: []
-        },
-        wednesday: {
-            type: [timeSlotSchema],
-            default: []
-        },
-        thursday: {
-            type: [timeSlotSchema],
-            default: []
-        },
-        friday: {
-            type: [timeSlotSchema],
-            default: []
-        },
-        saturday: {
-            type: [timeSlotSchema],
-            default: []
-        },
     },
     languages: {
         type: [String],

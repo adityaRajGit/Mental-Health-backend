@@ -25,6 +25,7 @@ import adminRoutes from "../server/routes/admin.routes";
 import companyRoutes from "../server/routes/company.routes";
 import packageRoutes from "../server/routes/package.routes";
 import webinarRoutes from "../server/routes/webinar.routes";
+import availabilityRoutes from "../server/routes/availability.routes";
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
 // Initialize the Express App
@@ -125,6 +126,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/company", companyRoutes);
 app.use("/api/v1/package", packageRoutes);
 app.use("/api/v1/webinar", webinarRoutes);
+app.use("/api/v1/availability", availabilityRoutes);
 app.use(session({ secret: "your-session-secret", resave: false, saveUninitialized: true }));
 // app.use(passport.initialize());
 // app.use(passport.session());

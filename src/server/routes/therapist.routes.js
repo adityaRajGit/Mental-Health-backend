@@ -13,7 +13,8 @@ import {
     therapistSignupHandler,
     therapistLoginHandler,
     calculateTherapistProfileCompletion,
-    recommendTherapistsHandler
+    recommendTherapistsHandler,
+    reccTherapistHandler
 } from '../../common/lib/therapist/therapistHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
