@@ -309,7 +309,7 @@ function parseDatetime(datetimeStr) {
   
   const dayOfWeek = datetime.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
   console.log("Day of week determined:", dayOfWeek);
-  
+  console.log("Time:", datetime.toLocaleString());
   return {
     datetime,
     dayOfWeek,
