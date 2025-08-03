@@ -329,7 +329,7 @@ async function fetchAvailabilities(dayOfWeek) {
   return availabilities;
 }
 
-// Fetch matching therapists based on criteria
+
 async function fetchMatchingTherapists(therapistIds, criteria) {
   const { specialization, language, city, country } = criteria;
   
@@ -350,7 +350,7 @@ function timeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
-// Check if target time fits in availability window
+// Check availability window
 function isTimeInRange(targetMinutes, fromTime, toTime, sessionDuration = 60) {
   const fromMinutes = timeToMinutes(fromTime);
   const toMinutes = timeToMinutes(toTime);
@@ -359,7 +359,7 @@ function isTimeInRange(targetMinutes, fromTime, toTime, sessionDuration = 60) {
   return targetMinutes >= fromMinutes && sessionEndMinutes <= toMinutes;
 }
 
-// Score therapists 
+ 
 function scoreTherapists(therapists, availabilities, criteria, targetMinutes) {
   const { language, city, country, dayOfWeek } = criteria;
   
@@ -371,12 +371,12 @@ function scoreTherapists(therapists, availabilities, criteria, targetMinutes) {
       score += 2;
     }
 
-    // City match
+    
     if (city && therapist.location?.city?.toLowerCase() === city.toLowerCase()) {
       score += 0.5;
     }
 
-    // Country match
+    
     if (country && therapist.location?.country?.toLowerCase() === country.toLowerCase()) {
       score += 1;
     }
@@ -389,7 +389,7 @@ function scoreTherapists(therapists, availabilities, criteria, targetMinutes) {
     for (const slot of availableTimeSlots) {
       if (slot.from && slot.to && isTimeInRange(targetMinutes, slot.from, slot.to)) {
         matchingSlot = slot;
-        score += 2; // Time match is important
+        score += 4; // Time match is important
         break;
       }
     }
