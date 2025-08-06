@@ -9,7 +9,9 @@ import {
     getUserDetailsHandler,
     getUserListHandler,
     updateUserDetailsHandler,
-    getUserDetailsHandlerV2
+    getUserDetailsHandlerV2,
+    userSignUpHandler,
+    verifyOtpAndCreateUserHandler
 } from '../../common/lib/user/userHandler';
 import serverConfig from '../../server/config';
 import responseStatus from "../../common/constants/responseStatus.json";
@@ -363,6 +365,69 @@ router.route('/:id/remove').post(async (req, res) => {
         });
     }
 });
+
+router.route('/signup/send-otp').post(async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({
+                status: responseData.ERROR,
+                data: { message: "Email is required" }
+            });
+        }
+        
+        const result = await userSignUpHandler({ body: { email } });
+        
+        res.status(responseStatus.STATUS_SUCCESS_OK).json({
+            status: responseData.SUCCESS,
+            data: result
+        });
+        
+    } catch (err) {
+        console.log(err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+            status: responseData.ERROR,
+            data: { message: err.message || err }
+        });
+    }
+});
+
+// Route to verify OTP and create user
+router.route('/signup/verify-otp').post(async (req, res) => {
+    try {
+        const { email, otp, userData } = req.body;
+        
+        if (!email || !otp) {
+            return res.status(400).json({
+                status: responseData.ERROR,
+                data: { message: "Email and OTP are required" }
+            });
+        }
+        
+        if (!userData || !userData.name) {
+            return res.status(400).json({
+                status: responseData.ERROR,
+                data: { message: "User data with name is required" }
+            });
+        }
+        
+        const result = await verifyOtpAndCreateUserHandler({ email, otp, userData });
+        
+        res.status(responseStatus.STATUS_SUCCESS_OK).json({
+            status: responseData.SUCCESS,
+            data: result
+        });
+        
+    } catch (err) {
+        console.log(err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+            status: responseData.ERROR,
+            data: { message: err.message || err }
+        });
+    }
+});
+
 
 export default router;
 
