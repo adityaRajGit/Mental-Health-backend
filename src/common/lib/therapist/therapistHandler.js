@@ -318,7 +318,7 @@ function parseDatetime(datetimeStr) {
 }
 
 // Fetch availabilities for a specific day
-async function fetchAvailabilities(dayOfWeek) {
+async function fetchAvailabilities(dayOfWeek,datetime) {
   const availabilities = await availabilityHelper.getAllObjects({
     query: {
       [`days.${dayOfWeek}`]: { $exists: true, $ne: [] },
@@ -330,12 +330,56 @@ async function fetchAvailabilities(dayOfWeek) {
 }
 
 
-async function fetchMatchingTherapists(therapistIds, criteria) {
+async function getTherapistsWithConflictingAppointments(datetime, sessionDuration = 60) {
+  const sessionStart = new Date(datetime);
+  const sessionEnd = new Date(sessionStart.getTime() + sessionDuration * 60000);
+  
+  // Find all confirmed appointments that overlap with the requested time
+  const conflictingAppointments = await appointmentHelper.getAllObjects({
+    query: {
+      payment_status: "CONFIRMED",
+      is_deleted: false,
+      $or: [
+        // Appointment starts during our session
+        {
+          scheduled_at: {
+            $gte: sessionStart,
+            $lt: sessionEnd
+          }
+        },
+        // Appointment ends during our session
+        {
+          $expr: {
+            $and: [
+              { $lte: ["$scheduled_at", sessionStart] },
+              { $gt: [{ $add: ["$scheduled_at", { $multiply: ["$duration", 60000] }] }, sessionStart] }
+            ]
+          }
+        }
+      ]
+    }
+  });
+  
+  const busyTherapistIds = conflictingAppointments.map(apt => apt.therapist_id.toString());
+  console.log(`Found ${busyTherapistIds.length} therapists with conflicting appointments:`, busyTherapistIds);
+  
+  return busyTherapistIds;
+}
+
+// Modify fetchMatchingTherapists to exclude busy therapists
+async function fetchMatchingTherapists(therapistIds, criteria, busyTherapistIds = []) {
   const { specialization, language, city, country } = criteria;
+  
+  // Filter out busy therapists
+  const availableTherapistIds = therapistIds.filter(id => 
+    !busyTherapistIds.includes(id.toString())
+  );
+  
+  console.log(`Available therapist IDs after filtering conflicts: ${availableTherapistIds.length}`);
   
   return await therapistHelper.getAllObjects({
     query: {
-      _id: { $in: therapistIds },
+      _id: { $in: availableTherapistIds },
       ...(specialization ? { specialization: { $in: Array.isArray(specialization) ? specialization : [specialization] } } : {}),
       ...(language ? { languages: { $in: [language] } } : {}),
       ...(city ? { "location.city": city } : {}),
@@ -344,6 +388,7 @@ async function fetchMatchingTherapists(therapistIds, criteria) {
     }
   });
 }
+
 
 function timeToMinutes(timeStr) {
   const [hours, minutes] = timeStr.split(':').map(Number);
@@ -422,49 +467,51 @@ function formatRecommendedTherapist(scoredTherapist) {
 export async function recommendTherapistsHandler(input) {
   console.log("Starting recommendTherapistsHandler with input:", input);
 
-  
-  validateRecommendationInput(input);
-  
-  
-  const { datetime, dayOfWeek, targetMinutes } = parseDatetime(input.preferred_datetime);
-  
-  
-  const availabilities = await fetchAvailabilities(dayOfWeek);
-  
-  
-  const therapistIds = availabilities.map(a => a.therapist);
-  console.log(`Therapist IDs with availability:`, therapistIds);
-  
-  // Fetch matching therapists
-  const therapists = await fetchMatchingTherapists(therapistIds, {
-    specialization: input.specialization,
-    language: input.language,
-    city: input.city,
-    country: input.country
-  });
-  console.log(`Filtered therapists count: ${therapists.length}`);
-  
-  
-  const scored = scoreTherapists(therapists, availabilities, {
-    language: input.language,
-    city: input.city,
-    country: input.country,
-    dayOfWeek
-  }, targetMinutes);
-  
-  
-  scored.sort((a, b) => b.score - a.score);
-  
-  
-  const recommendedTherapist = formatRecommendedTherapist(scored[0]);
-  
-  if (recommendedTherapist) {
-    console.log("Recommended therapist:", recommendedTherapist);
-  } else {
-    console.log("No therapist matched the criteria with a positive score.");
+  try {
+    validateRecommendationInput(input);
+    
+    const { datetime, dayOfWeek, targetMinutes } = parseDatetime(input.preferred_datetime);
+    
+    // Get therapists with conflicting appointments
+    const busyTherapistIds = await getTherapistsWithConflictingAppointments(datetime);
+    
+    const availabilities = await fetchAvailabilities(dayOfWeek, datetime);
+    
+    const therapistIds = availabilities.map(a => a.therapist);
+    console.log(`Therapist IDs with availability:`, therapistIds);
+    
+    // Fetch matching therapists (excluding busy ones)
+    const therapists = await fetchMatchingTherapists(therapistIds, {
+      specialization: input.specialization,
+      language: input.language,
+      city: input.city,
+      country: input.country
+    }, busyTherapistIds);
+    console.log(`Filtered therapists count after removing conflicts: ${therapists.length}`);
+    
+    const scored = scoreTherapists(therapists, availabilities, {
+      language: input.language,
+      city: input.city,
+      country: input.country,
+      dayOfWeek
+    }, targetMinutes);
+    
+    scored.sort((a, b) => b.score - a.score);
+    
+    const recommendedTherapist = formatRecommendedTherapist(scored[0]);
+    
+    if (recommendedTherapist) {
+      console.log("Recommended therapist:", recommendedTherapist);
+    } else {
+      console.log("No therapist matched the criteria with a positive score.");
+    }
+
+    return { recommendedTherapist };
   }
-  
-  return { recommendedTherapist };
+  catch(e) {
+    console.error("Error in recommendTherapistsHandler:", e);
+    throw e;
+  }
 }
 
 export async function getTherapistListHandler(input) {
