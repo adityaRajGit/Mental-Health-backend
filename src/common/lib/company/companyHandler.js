@@ -9,6 +9,7 @@ export async function getCompanyDetailsHandler(input) {
 }
 
 export async function updateCompanyDetailsHandler(input) {
+    console.log(input);
     return await companyHelper.directUpdateObject(input.objectId, input.updateObject);
 }
 

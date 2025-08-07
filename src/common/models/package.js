@@ -29,6 +29,9 @@ const packageSchema = new Schema({
     max_sessions_per_month: {
         type: Number,
     },
+    total_counselling_sessions : {
+        type: Number,
+    },
     max_sessions_minutes: {
         type: Number,
     },
