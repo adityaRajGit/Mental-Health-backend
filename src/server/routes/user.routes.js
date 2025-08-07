@@ -394,9 +394,12 @@ router.route('/signup/send-otp').post(async (req, res) => {
 });
 
 // Route to verify OTP and create user
+// Route to verify OTP and create user
 router.route('/signup/verify-otp').post(async (req, res) => {
     try {
         const { email, otp, userData } = req.body;
+        
+        console.log("Received verification request:", { email, otp: otp ? "***" : "missing", userData: userData ? "provided" : "missing" });
         
         if (!email || !otp) {
             return res.status(400).json({
@@ -420,14 +423,13 @@ router.route('/signup/verify-otp').post(async (req, res) => {
         });
         
     } catch (err) {
-        console.log(err);
+        console.error("Route error:", err);
         res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
             status: responseData.ERROR,
-            data: { message: err.message || err }
+            data: { message: err.message || "OTP verification failed" }
         });
     }
 });
-
 
 export default router;
 

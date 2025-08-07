@@ -5,11 +5,7 @@ import { v2 as cloudinary } from "cloudinary";
 import company from '../../models/company.js';
 import companyHelper from '../../helpers/company.helper.js';
 import {verifyEmailOTP,sendVerificationEmail} from '../../util/utilHelper.js';
-function generateUsername(name) {
-    if (!name) return `user${Date.now()}`;
-    const base = name.trim().toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, '_');
-    return `${base}_${Math.floor(1000 + Math.random() * 9000)}`;
-}
+
 
 export async function addNewUserHandler(input) {
 
@@ -146,11 +142,15 @@ export async function verifyOtpAndCreateUserHandler(input) {
     }
     
     try {
+        console.log("Verifying OTP for email:", email, "OTP:", otp);
+        
         // Verify OTP
         const verificationResult = await verifyEmailOTP(email, otp);
+        console.log("Verification result:", verificationResult);
         
         if (!verificationResult.success) {
-            throw new Error("Invalid or expired OTP");
+            const errorMessage = verificationResult.error || verificationResult.message || "Invalid or expired OTP";
+            throw new Error(errorMessage);
         }
         
         // Check if user already exists
@@ -162,6 +162,13 @@ export async function verifyOtpAndCreateUserHandler(input) {
             throw new Error("User with this email already exists");
         }
         
+        // Hash password if provided
+        if (userData.password) {
+            const bcrypt = require('bcryptjs');
+            const salt = await bcrypt.genSalt(10);
+            userData.password = await bcrypt.hash(userData.password, salt);
+        }
+        
         // Generate username if not provided
         if (!userData.username && userData.name) {
             userData.username = generateUsername(userData.name);
@@ -169,6 +176,7 @@ export async function verifyOtpAndCreateUserHandler(input) {
         
         // Add email to userData
         userData.email = email;
+        userData.role = userData.role || "user";
         
         // Create user in database
         const newUser = await userHelper.addObject(userData);
@@ -179,13 +187,22 @@ export async function verifyOtpAndCreateUserHandler(input) {
                 _id: newUser._id,
                 name: newUser.name,
                 email: newUser.email,
-                username: newUser.username
+                username: newUser.username,
+                role: newUser.role
             }
         };
         
     } catch (error) {
+        console.error("Error in verifyOtpAndCreateUserHandler:", error);
         throw new Error(`OTP verification failed: ${error.message}`);
     }
+}
+
+// Helper function to generate username
+function generateUsername(name) {
+    const cleanName = name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const randomNumber = Math.floor(Math.random() * 10000);
+    return `${cleanName}${randomNumber}`;
 }
 
 export async function getUserListHandler(input) {
