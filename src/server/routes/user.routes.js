@@ -11,7 +11,8 @@ import {
     updateUserDetailsHandler,
     getUserDetailsHandlerV2,
     userSignUpHandler,
-    verifyOtpAndCreateUserHandler
+    verifyOtpAndCreateUserHandler,
+    userCompanyCreditCheck
 } from '../../common/lib/user/userHandler';
 import serverConfig from '../../server/config';
 import responseStatus from "../../common/constants/responseStatus.json";
@@ -21,6 +22,7 @@ import { generateToken } from "../../common/util/authUtil";
 import userHelper from "../../common/helpers/user.helper";
 import { getTherapistsForUser } from '../../common/lib/user/userHandler';
 import { storage } from "../../util/cloudinary.js";
+import companyHelper from '../../common/helpers/company.helper.js';
 
 const upload = multer({ storage, limits: { fileSize: 500 * 1024 * 1024 } });
 
@@ -394,7 +396,6 @@ router.route('/signup/send-otp').post(async (req, res) => {
 });
 
 // Route to verify OTP and create user
-// Route to verify OTP and create user
 router.route('/signup/verify-otp').post(async (req, res) => {
     try {
         const { email, otp, userData } = req.body;
@@ -430,6 +431,29 @@ router.route('/signup/verify-otp').post(async (req, res) => {
         });
     }
 });
+
+router.route('/:id/check-company-credits').get(async(req,res)=>{
+    try{
+        if(req.params.id)
+        {
+            const creditCheckResult = await userCompanyCreditCheck(req.params.id);
+            res.status(responseStatus.STATUS_SUCCESS_OK).json({
+                status: responseData.SUCCESS,
+                data: {
+                    creditCheck: creditCheckResult
+                }
+            });
+        }
+    }
+    catch(err)
+    {
+        console.log("Error on Checking Credits:",err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+            status: responseData.ERROR,
+            data: { message: err.message || "Company credit check failed" }
+        });
+    }
+})
 
 export default router;
 

@@ -20,6 +20,11 @@ const userSchema = new Schema({
         trim: true
     },
 
+    company_id : {
+        type: Schema.Types.ObjectId,
+        ref: 'Company'
+    },
+
     phone: {
         type: String,
         minlength: 10,
