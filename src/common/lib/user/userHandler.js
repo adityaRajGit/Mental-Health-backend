@@ -206,7 +206,7 @@ export async function verifyOtpAndCreateUserHandler(input) {
         // Add email to userData
         userData.email = email;
         userData.role = userData.role || "user";
-        
+        userData.email_verified = true;
         // Create user in database
         const newUser = await userHelper.addObject(userData);
         
