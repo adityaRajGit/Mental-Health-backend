@@ -464,10 +464,20 @@ function formatRecommendedTherapist(scoredTherapist) {
 }
 
 // Main handler function
+// Create an in-memory store to track failed attempts
+const userFailedAttempts = {};
+
 export async function recommendTherapistsHandler(input) {
   console.log("Starting recommendTherapistsHandler with input:", input);
 
   try {
+    // Check if user has too many failed attempts before proceeding
+    const userId = input.user_id;
+    if (userId && userFailedAttempts[userId] && userFailedAttempts[userId] >= 5) {
+      console.log(`User ${userId} has had ${userFailedAttempts[userId]} failed attempts.`);
+      throw "Server Busy, Please Try Again";
+    }
+    
     validateRecommendationInput(input);
     
     const { datetime, dayOfWeek, targetMinutes } = parseDatetime(input.preferred_datetime);
@@ -502,8 +512,24 @@ export async function recommendTherapistsHandler(input) {
     
     if (recommendedTherapist) {
       console.log("Recommended therapist:", recommendedTherapist);
+      // Reset failed attempts counter if we found a therapist
+      if (userId) {
+        userFailedAttempts[userId] = 0;
+      }
     } else {
       console.log("No therapist matched the criteria with a positive score.");
+      
+      // Track failed attempts if user_id is provided
+      if (userId) {
+        // Initialize or increment failed attempts counter
+        userFailedAttempts[userId] = (userFailedAttempts[userId] || 0) + 1;
+        
+        // Check if user has too many failed attempts
+        if (userFailedAttempts[userId] >= 5) {
+          console.log(`User ${userId} has had ${userFailedAttempts[userId]} failed attempts.`);
+          throw "Server Busy, Please Try Again";
+        }
+      }
     }
 
     return { recommendedTherapist };
