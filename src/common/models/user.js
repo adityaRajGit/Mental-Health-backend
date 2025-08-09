@@ -47,6 +47,10 @@ const userSchema = new Schema({
         default: false
     },
 
+    department:{
+        type: String
+    },
+    
     bio: String,
 
     status: {
