@@ -177,8 +177,6 @@ router.route("/send-email-otp").post(async (req, res) => {
             })
         }
 
-        console.log(user);
-
         if (user) {
             throw "This email is already exists";
         }
