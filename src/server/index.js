@@ -25,6 +25,8 @@ import adminRoutes from "../server/routes/admin.routes";
 import companyRoutes from "../server/routes/company.routes";
 import packageRoutes from "../server/routes/package.routes";
 import webinarRoutes from "../server/routes/webinar.routes";
+import availabilityRoutes from "../server/routes/availability.routes";
+import otpRoutes from "../server/routes/otp.routes";
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
 // Initialize the Express App
@@ -115,6 +117,7 @@ app.use("/", mainRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/post", postRoutes);
+app.use("/api/v1/otp", otpRoutes);
 app.use("/api/v1/comment", commentRoutes);
 app.use("/api/v1/share", shareRoutes);
 app.use("/api/v1/therapist", therapistRoutes);
@@ -125,6 +128,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/company", companyRoutes);
 app.use("/api/v1/package", packageRoutes);
 app.use("/api/v1/webinar", webinarRoutes);
+app.use("/api/v1/availability", availabilityRoutes);
 app.use(session({ secret: "your-session-secret", resave: false, saveUninitialized: true }));
 // app.use(passport.initialize());
 // app.use(passport.session());

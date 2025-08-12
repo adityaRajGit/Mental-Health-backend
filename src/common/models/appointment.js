@@ -32,6 +32,11 @@ const appointmentSchema = new Schema({
     paymentId:{
         type:Schema.ObjectId
     },
+    user_feedback: {
+        type: Number,
+        min: 1,
+        max: 5
+    },
     is_deleted: {
         type: Boolean,
         default: false 

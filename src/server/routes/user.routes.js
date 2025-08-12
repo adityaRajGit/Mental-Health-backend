@@ -9,7 +9,10 @@ import {
     getUserDetailsHandler,
     getUserListHandler,
     updateUserDetailsHandler,
-    getUserDetailsHandlerV2
+    getUserDetailsHandlerV2,
+    userSignUpHandler,
+    verifyOtpAndCreateUserHandler,
+    userCompanyCreditCheck
 } from '../../common/lib/user/userHandler';
 import serverConfig from '../../server/config';
 import responseStatus from "../../common/constants/responseStatus.json";
@@ -19,6 +22,7 @@ import { generateToken } from "../../common/util/authUtil";
 import userHelper from "../../common/helpers/user.helper";
 import { getTherapistsForUser } from '../../common/lib/user/userHandler';
 import { storage } from "../../util/cloudinary.js";
+import companyHelper from '../../common/helpers/company.helper.js';
 
 const upload = multer({ storage, limits: { fileSize: 500 * 1024 * 1024 } });
 
@@ -363,6 +367,93 @@ router.route('/:id/remove').post(async (req, res) => {
         });
     }
 });
+
+router.route('/signup/send-otp').post(async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({
+                status: responseData.ERROR,
+                data: { message: "Email is required" }
+            });
+        }
+        
+        const result = await userSignUpHandler({ body: { email } });
+        
+        res.status(responseStatus.STATUS_SUCCESS_OK).json({
+            status: responseData.SUCCESS,
+            data: result
+        });
+        
+    } catch (err) {
+        console.log(err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+            status: responseData.ERROR,
+            data: { message: err.message || err }
+        });
+    }
+});
+
+// Route to verify OTP and create user
+router.route('/signup/verify-otp').post(async (req, res) => {
+    try {
+        const { email, otp, userData } = req.body;
+        
+        console.log("Received verification request:", { email, otp: otp ? "***" : "missing", userData: userData ? "provided" : "missing" });
+        
+        if (!email || !otp) {
+            return res.status(400).json({
+                status: responseData.ERROR,
+                data: { message: "Email and OTP are required" }
+            });
+        }
+        
+        if (!userData || !userData.name) {
+            return res.status(400).json({
+                status: responseData.ERROR,
+                data: { message: "User data with name is required" }
+            });
+        }
+        
+        const result = await verifyOtpAndCreateUserHandler({ email, otp, userData });
+        
+        res.status(responseStatus.STATUS_SUCCESS_OK).json({
+            status: responseData.SUCCESS,
+            data: result
+        });
+        
+    } catch (err) {
+        console.error("Route error:", err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+            status: responseData.ERROR,
+            data: { message: err.message || "OTP verification failed" }
+        });
+    }
+});
+
+router.route('/:id/check-company-credits').get(async(req,res)=>{
+    try{
+        if(req.params.id)
+        {
+            const creditCheckResult = await userCompanyCreditCheck(req.params.id);
+            res.status(responseStatus.STATUS_SUCCESS_OK).json({
+                status: responseData.SUCCESS,
+                data: {
+                    creditCheck: creditCheckResult
+                }
+            });
+        }
+    }
+    catch(err)
+    {
+        console.log("Error on Checking Credits:",err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).json({
+            status: responseData.ERROR,
+            data: { message: err.message || "Company credit check failed" }
+        });
+    }
+})
 
 export default router;
 

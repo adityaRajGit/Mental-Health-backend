@@ -20,6 +20,11 @@ const userSchema = new Schema({
         trim: true
     },
 
+    company_id : {
+        type: Schema.Types.ObjectId,
+        ref: 'Company'
+    },
+
     phone: {
         type: String,
         minlength: 10,
@@ -42,6 +47,10 @@ const userSchema = new Schema({
         default: false
     },
 
+    department:{
+        type: String
+    },
+    
     bio: String,
 
     status: {

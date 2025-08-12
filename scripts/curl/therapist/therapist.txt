@@ -1,16 +1,51 @@
 
 CREATE
 
-curl --location '{{url}}/api/v1/therapist/new' \
+curl --location 'http://localhost:8080/api/v1/therapist/new' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU' \
 --data-raw '{
-    "therapist": {
-        "is_deleted": false,
-        "created_at": "2023-09-21T05:40:39.287Z",
-        "updated_at": "2023-09-21T05:40:39.288Z"
-    }
-}'
+  "therapist": {
+    "name": "Mr. Faizan Shaikh",
+    "email": "faizan.shaikh@example.com",
+    "username": "faizan.shaikh",
+    "phone": "9897654321",
+    "password": "faizan@123",
+    "email_verified": true,
+    "profile_image": "https://example.com/images/faizan.jpg",
+    "academic_background": {
+      "qualification": ["MSW (Medical & Psychiatry)", "Diploma in CBT"],
+      "years_of_experience": 82
+    },
+    "bio": "Empathetic therapist focused on youth mental health and addiction recovery. Uses a combination of CBT and mindfulness techniques.",
+    "specialization": ["Addiction", "Youth Counseling", "Mindfulness-Based Therapy"],
+    "session_details": {
+      "duration": 60,
+      "cost": 1700,
+      "currency": "₹"
+    },
+    "googleId": null,
+    "role": "therapist",
+    "availability": {
+      "sunday": [],
+      "monday": [{ "from": "09:00", "to": "11:00" }],
+      "tuesday": [{ "from": "18:00", "to": "21:00" }],
+      "wednesday": [],
+      "thursday": [{ "from": "11:00", "to": "14:00" }],
+      "friday": [{ "from": "16:00", "to": "20:00" }],
+      "saturday": [{ "from": "10:00", "to": "13:00" }]
+    },
+    "languages": ["en", "ur", "hi"],
+    "location": {
+      "city": "Hyderabad",
+      "country": "India"
+    },
+    "is_deleted": false,
+    "created_at": "2025-07-29T00:00:00.000Z",
+    "updated_at": "2025-07-29T00:00:00.000Z"
+  }
+}
+'
 
 LIST
 
@@ -44,4 +79,17 @@ DELETE
 
 curl --location --request POST '{{url}}/api/v1/therapist/:therapist_id/remove' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGE1NGRkOWZiMTA5OTMzZjg4MzY0MDciLCJjb250YWN0X2VtYWlsIjoicmFnaHZlbmRyYS5tb2RhbndhbEBhbnRjcmVhdGl2ZXMuY29tIiwiY29udGFjdF9uYW1lIjoiUmFnaGF2IiwiY29udGFjdF9waG9uZSI6Ijg3NTY4MDk4NzgiLCJpYXQiOjE2ODg1NTUyNzR9.sMRhMGvaYTc1cNEIiuMPvBl1j_VhiKt8mi3gDmQRuLU'
+
+Recommend Therapist 
+
+curl --location 'http://localhost:8080/api/v1/therapist/recommend' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <token>' \
+--data '{
+  "specialization": "Anxiety",
+  "language": "en",
+  "city": "Hyderabad",
+  "country": "India",
+  "preferred_datetime": "2025-08-04T10:30:00.000Z"
+}'
 
