@@ -6,7 +6,7 @@ import { getUserInfo } from '../../util/utilHelper';
 import userHelper from '../../helpers/user.helper';
 import therapist from '../../models/therapist';
 import availabilityHelper from '../../helpers/availability.helper';
-
+import appointmentHelper from '../../helpers/appointment.helper';
 export async function addNewTherapistHandlerV2(input) {
 
   // Add file paths to therapist data
@@ -334,7 +334,7 @@ async function getTherapistsWithConflictingAppointments(datetime, sessionDuratio
   const sessionStart = new Date(datetime);
   const sessionEnd = new Date(sessionStart.getTime() + sessionDuration * 60000);
   
-  // Find all confirmed appointments that overlap with the requested time
+  
   const conflictingAppointments = await appointmentHelper.getAllObjects({
     query: {
       payment_status: "CONFIRMED",
@@ -381,7 +381,7 @@ async function fetchMatchingTherapists(therapistIds, criteria, busyTherapistIds 
     query: {
       _id: { $in: availableTherapistIds },
       ...(specialization ? { specialization: { $in: Array.isArray(specialization) ? specialization : [specialization] } } : {}),
-      ...(language ? { languages: { $in: [language] } } : {}),
+      ...(language ? { languages: { $in: Array.isArray(language) ? language : [language] } } : {}),
       ...(city ? { "location.city": city } : {}),
       ...(country ? { "location.country": country } : {}),
       is_deleted: false
@@ -411,12 +411,25 @@ function scoreTherapists(therapists, availabilities, criteria, targetMinutes) {
   return therapists.map(therapist => {
     let score = 0;
 
-    // Language match
-    if (language && therapist.languages?.map(l => l.toLowerCase()).includes(language.toLowerCase())) {
-      score += 2;
+    
+    if (language) {
+      const userLanguages = Array.isArray(language) ? language : [language];
+      const therapistLanguages = therapist.languages?.map(l => l.toLowerCase()) || [];
+      
+      // Check for any matching languages
+      const matchingLanguages = userLanguages.filter(l => 
+        therapistLanguages.includes(l.toLowerCase())
+      );
+      
+      if (matchingLanguages.length > 0) {
+        score += 2;
+        // Give slight bonus for each additional matching language
+        if (matchingLanguages.length > 1) {
+          score += 0.5 * (matchingLanguages.length - 1);
+        }
+      }
     }
 
-    
     if (city && therapist.location?.city?.toLowerCase() === city.toLowerCase()) {
       score += 0.5;
     }
@@ -552,4 +565,4 @@ export async function deleteTherapistHandler(input) {
 
 export async function getTherapistByQueryHandler(input) {
   return await therapistHelper.getObjectByQuery(input);
-}  
+}
