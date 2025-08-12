@@ -26,6 +26,7 @@ import companyRoutes from "../server/routes/company.routes";
 import packageRoutes from "../server/routes/package.routes";
 import webinarRoutes from "../server/routes/webinar.routes";
 import availabilityRoutes from "../server/routes/availability.routes";
+import otpRoutes from "../server/routes/otp.routes";
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
 // Initialize the Express App
@@ -116,6 +117,7 @@ app.use("/", mainRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/post", postRoutes);
+app.use("/api/v1/otp", otpRoutes);
 app.use("/api/v1/comment", commentRoutes);
 app.use("/api/v1/share", shareRoutes);
 app.use("/api/v1/therapist", therapistRoutes);
