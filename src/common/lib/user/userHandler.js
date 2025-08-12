@@ -95,9 +95,8 @@ export async function updateUserDetailsHandler(input) {
 
 export async function userSignUpHandler(input) {
     const companyDomain = input.body.email.split("@")[1];
-    console.log(companyDomain);
     if (!companyDomain) {
-        throw new Error("Invalid email format");
+        throw "Invalid email format"
     }
     
     // Search for companies with matching domain
@@ -118,14 +117,14 @@ export async function userSignUpHandler(input) {
     }
     
     if (companiesWithDomain.length === 0) {
-        throw new Error("No company found with this email domain");
+        throw "No company found with this email domain"
     }
     
     // Send OTP to email
-    const otpResult = await sendVerificationEmail(input.body.email, "Email Verification for Company Registration");
+    const otpResult = await sendVerificationEmail(input.body.email, "Email Verification Otp");
     
     if (!otpResult.success) {
-        throw new Error("Failed to send verification email");
+        throw "Failed to send verification email"
     }
 
     return {
