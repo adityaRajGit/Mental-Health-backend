@@ -6,7 +6,7 @@ import { getUserInfo } from '../../util/utilHelper';
 import userHelper from '../../helpers/user.helper';
 import therapist from '../../models/therapist';
 import availabilityHelper from '../../helpers/availability.helper';
-
+import appointmentHelper from '../../helpers/appointment.helper';
 export async function addNewTherapistHandlerV2(input) {
 
   // Add file paths to therapist data
@@ -334,7 +334,7 @@ async function getTherapistsWithConflictingAppointments(datetime, sessionDuratio
   const sessionStart = new Date(datetime);
   const sessionEnd = new Date(sessionStart.getTime() + sessionDuration * 60000);
   
-  // Find all confirmed appointments that overlap with the requested time
+  
   const conflictingAppointments = await appointmentHelper.getAllObjects({
     query: {
       payment_status: "CONFIRMED",
@@ -381,7 +381,7 @@ async function fetchMatchingTherapists(therapistIds, criteria, busyTherapistIds 
     query: {
       _id: { $in: availableTherapistIds },
       ...(specialization ? { specialization: { $in: Array.isArray(specialization) ? specialization : [specialization] } } : {}),
-      ...(language ? { languages: { $in: [language] } } : {}),
+      ...(language ? { languages: { $in: Array.isArray(language) ? language : [language] } } : {}),
       ...(city ? { "location.city": city } : {}),
       ...(country ? { "location.country": country } : {}),
       is_deleted: false
@@ -411,12 +411,25 @@ function scoreTherapists(therapists, availabilities, criteria, targetMinutes) {
   return therapists.map(therapist => {
     let score = 0;
 
-    // Language match
-    if (language && therapist.languages?.map(l => l.toLowerCase()).includes(language.toLowerCase())) {
-      score += 2;
+    
+    if (language) {
+      const userLanguages = Array.isArray(language) ? language : [language];
+      const therapistLanguages = therapist.languages?.map(l => l.toLowerCase()) || [];
+      
+      // Check for any matching languages
+      const matchingLanguages = userLanguages.filter(l => 
+        therapistLanguages.includes(l.toLowerCase())
+      );
+      
+      if (matchingLanguages.length > 0) {
+        score += 2;
+        // Give slight bonus for each additional matching language
+        if (matchingLanguages.length > 1) {
+          score += 0.5 * (matchingLanguages.length - 1);
+        }
+      }
     }
 
-    
     if (city && therapist.location?.city?.toLowerCase() === city.toLowerCase()) {
       score += 0.5;
     }
@@ -463,19 +476,47 @@ function formatRecommendedTherapist(scoredTherapist) {
   };
 }
 
-// Main handler function
-// Create an in-memory store to track failed attempts
+
 const userFailedAttempts = {};
+
+function trackFailedAttempt(userId) {
+    const now = Date.now();
+    
+    if (!userFailedAttempts[userId]) {
+        userFailedAttempts[userId] = {
+            count: 1,
+            timestamp: now
+        };
+        return 1;
+    }
+    
+    // Reset if last attempt was more than 30 minutes ago
+    if (now - userFailedAttempts[userId].timestamp > 30 * 60 * 1000) {
+        userFailedAttempts[userId] = {
+            count: 1,
+            timestamp: now
+        };
+        return 1;
+    }
+    
+    // Otherwise increment the counter and update timestamp
+    userFailedAttempts[userId].count += 1;
+    userFailedAttempts[userId].timestamp = now;
+    return userFailedAttempts[userId].count;
+}
 
 export async function recommendTherapistsHandler(input) {
   console.log("Starting recommendTherapistsHandler with input:", input);
 
   try {
-    // Check if user has too many failed attempts before proceeding
+    
     const userId = input.user_id;
-    if (userId && userFailedAttempts[userId] && userFailedAttempts[userId] >= 5) {
-      console.log(`User ${userId} has had ${userFailedAttempts[userId]} failed attempts.`);
-      throw "Server Busy, Please Try Again";
+    if (userId) {
+      const attempts = userFailedAttempts[userId]?.count || 0;
+      if (attempts >= 5) {
+        console.log(`User ${userId} has had ${attempts} failed attempts.`);
+        throw "Server Busy, Please Try Again";
+      }
     }
     
     validateRecommendationInput(input);
@@ -514,19 +555,17 @@ export async function recommendTherapistsHandler(input) {
       console.log("Recommended therapist:", recommendedTherapist);
       // Reset failed attempts counter if we found a therapist
       if (userId) {
-        userFailedAttempts[userId] = 0;
+        delete userFailedAttempts[userId]; // Reset counter on success
       }
     } else {
       console.log("No therapist matched the criteria with a positive score.");
       
-      // Track failed attempts if user_id is provided
       if (userId) {
-        // Initialize or increment failed attempts counter
-        userFailedAttempts[userId] = (userFailedAttempts[userId] || 0) + 1;
+        const attempts = trackFailedAttempt(userId);
+        console.log(`User ${userId} has had ${attempts} failed attempts.`);
         
         // Check if user has too many failed attempts
-        if (userFailedAttempts[userId] >= 5) {
-          console.log(`User ${userId} has had ${userFailedAttempts[userId]} failed attempts.`);
+        if (attempts >= 5) {
           throw "Server Busy, Please Try Again";
         }
       }
@@ -552,4 +591,4 @@ export async function deleteTherapistHandler(input) {
 
 export async function getTherapistByQueryHandler(input) {
   return await therapistHelper.getObjectByQuery(input);
-}  
+}
