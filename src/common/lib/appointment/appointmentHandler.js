@@ -1,4 +1,5 @@
 import appointmentHelper from '../../helpers/appointment.helper';
+import { createGoogleMeetEvent } from '../../../util/googleMeet.js';
 
 export async function addNewAppointmentHandler(input) {
     return await appointmentHelper.addObject(input);
@@ -28,11 +29,12 @@ export async function getAllPastAppointmentsHandler() {
 
 export async function addNewAppointmentHandlerV2(input) {
     
-    const meetLink = await createGoogleMeetEvent({
+     const meetLink = await createGoogleMeetEvent({
         summary: "Therapy Session",
         description: "Your scheduled therapy appointment",
         startTime: input.scheduled_at,
         endTime: new Date(new Date(input.scheduled_at).getTime() + (input.duration || 60) * 60000).toISOString(),
+        attendees: input.attendees || [] // You can add attendee emails here if available
     });
     
     input.meet_link = meetLink;

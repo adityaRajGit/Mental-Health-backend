@@ -202,7 +202,6 @@ export async function verifyOtpAndCreateUserHandler(input) {
 
         // Add company_id to userData
         userData.company_id = companiesWithDomain[0]._id;
-        // Add email to userData
         userData.email = email;
         userData.role = userData.role || "user";
         userData.email_verified = true;
