@@ -4,6 +4,7 @@ import {Router} from 'express';
 
 import {
     addNewAppointmentHandler,
+    addNewAppointmentHandlerV2,
     deleteAppointmentHandler,
     getAppointmentDetailsHandler,
     getAppointmentListHandler,
@@ -89,7 +90,7 @@ router.get('/past', async (req, res) => {
 router.route('/new').post(async (req, res) => {
     try {
        if (!_.isEmpty(req.body)) {
-            const outputResult = await addNewAppointmentHandler(req.body.appointment);
+            const outputResult = await addNewAppointmentHandlerV2(req.body.appointment);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,

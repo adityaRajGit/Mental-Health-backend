@@ -592,3 +592,137 @@ export async function deleteTherapistHandler(input) {
 export async function getTherapistByQueryHandler(input) {
   return await therapistHelper.getObjectByQuery(input);
 }
+
+export async function getAllTherapistTimelinesAndSpecialization() {
+  try {
+    // Get all therapists with their availability data
+    const therapists = await therapistHelper.getAllObjects({
+      query: { is_deleted: false }
+    });
+
+    // Get all availabilities separately to ensure proper data access
+    const allAvailabilities = await availabilityHelper.getAllObjects({
+      query: { is_deleted: false }
+    });
+
+    console.log(`Found ${therapists.length} therapists and ${allAvailabilities.length} availability records`);
+
+    // Extract all unique specializations
+    const specializations = [...new Set(
+      therapists.flatMap(therapist => therapist.specialization || [])
+    )];
+
+    // Map availabilities to therapists
+    const therapistAvailabilities = therapists.map(therapist => {
+      // Find this therapist's availability record
+      const availabilityObj = allAvailabilities.find(a => 
+        a.therapist && a.therapist.toString() === therapist._id.toString()
+      );
+      
+      // Debug the availability structure
+      if (availabilityObj) {
+        console.log(`Found availability for therapist ${therapist.name}:`, 
+          JSON.stringify(availabilityObj.days || availabilityObj));
+      }
+      
+      // Try different possible structures for availability data
+      let availabilityData;
+      if (availabilityObj?.days) {
+        availabilityData = availabilityObj.days;
+      } else if (availabilityObj) {
+        // Maybe days are directly in the object
+        const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        if (daysOfWeek.some(day => Array.isArray(availabilityObj[day]))) {
+          availabilityData = availabilityObj;
+        }
+      }
+      
+      return {
+        name: therapist.name,
+        availability: availabilityData || {
+          sunday: [], monday: [], tuesday: [], wednesday: [],
+          thursday: [], friday: [], saturday: []
+        }
+      };
+    });
+
+    // Merge all availabilities
+    const mergedAvailability = mergeTherapistAvailability(therapistAvailabilities);
+
+    return {
+      specializations,
+      availability: mergedAvailability
+    };
+  } catch (error) {
+    console.error("Error getting therapist timelines and specializations:", error);
+    throw error;
+  }
+}
+
+// Main function to merge therapist availabilities
+function mergeTherapistAvailability(therapists) {
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const mergedAvailability = {};
+
+  // Debug output
+  console.log(`Merging availability for ${therapists.length} therapists`);
+  
+  // Process each day
+  for (const day of days) {
+    // Collect all time slots for this day from all therapists
+    const allSlots = therapists.flatMap(therapist => {
+      const daySlots = therapist.availability[day] || [];
+      console.log(`Therapist ${therapist.name} has ${daySlots.length} slots for ${day}`);
+      return daySlots.map(slot => ({
+        from: timeToMinutes(slot.from),
+        to: timeToMinutes(slot.to)
+      }));
+    });
+
+    console.log(`Total slots collected for ${day}: ${allSlots.length}`);
+
+    if (allSlots.length === 0) {
+      mergedAvailability[day] = [];
+      continue;
+    }
+
+    // Sort slots by start time
+    allSlots.sort((a, b) => a.from - b.from);
+
+    // Merge overlapping slots
+    const mergedSlots = [allSlots[0]];
+    
+    for (let i = 1; i < allSlots.length; i++) {
+      const currentSlot = allSlots[i];
+      const lastMergedSlot = mergedSlots[mergedSlots.length - 1];
+
+      // Check if current slot overlaps or is adjacent to the last merged slot
+      if (currentSlot.from <= lastMergedSlot.to || 
+          currentSlot.from <= lastMergedSlot.to + 1) {
+        // Merge by extending the end time if necessary
+        lastMergedSlot.to = Math.max(lastMergedSlot.to, currentSlot.to);
+      } else {
+        // No overlap, add as a new slot
+        mergedSlots.push(currentSlot);
+      }
+    }
+
+    // Convert back to time strings
+    mergedAvailability[day] = mergedSlots.map(slot => ({
+      from: minutesToTime(slot.from),
+      to: minutesToTime(slot.to)
+    }));
+    
+    console.log(`Merged slots for ${day}: ${mergedAvailability[day].length}`);
+  }
+
+  return mergedAvailability;
+}
+
+// Helper function to convert minutes back to time string
+function minutesToTime(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
+
