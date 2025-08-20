@@ -14,7 +14,8 @@ import {
     therapistLoginHandler,
     calculateTherapistProfileCompletion,
     recommendTherapistsHandler,
-    reccTherapistHandler
+    reccTherapistHandler,
+    getAllTherapistTimelinesAndSpecialization
 } from '../../common/lib/therapist/therapistHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
@@ -174,6 +175,24 @@ router.get('/:id/profile-completion', async (req, res) => {
         res.status(500).json({
             status: "Error",
             data: { message: err.message }
+        });
+    }
+});
+
+router.route('/timelineandspecializations').get(async (req, res) => {
+    try {
+        // Call the handler function with the request data
+        const result = await getAllTherapistTimelinesAndSpecialization();
+        
+        res.status(responseStatus.STATUS_SUCCESS_OK).send({
+            status: responseData.SUCCESS,
+            data: result
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
+            status: responseData.ERROR,
+            data: { message: err.message || err }
         });
     }
 });
