@@ -67,29 +67,6 @@ const therapistSchema = new Schema({
         default: 'therapist',
         required: true,
     },
-    availability: {
-        sunday: {
-            type: [Date]
-        },
-        monday: {
-            type: [Date]
-        },
-        tuesday: {
-            type: [Date]
-        },
-        wednesday: {
-            type: [Date]
-        },
-        thursday: {
-            type: [Date]
-        },
-        friday: {
-            type: [Date]
-        },
-        saturday: {
-            type: [Date]
-        },
-    },
     languages: {
         type: [String],
     },

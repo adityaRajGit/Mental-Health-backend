@@ -3,15 +3,12 @@ import _ from 'lodash';
 import {Router} from 'express';
 
 import {
-    addNewAppointmentHandler,
-    addNewAppointmentHandlerV2,
-    deleteAppointmentHandler,
-    getAppointmentDetailsHandler,
-    getAppointmentListHandler,
-    updateAppointmentDetailsHandler,
-    getAllUpcomingAppointmentsHandler,
-    getAllPastAppointmentsHandler,
-} from '../../common/lib/appointment/appointmentHandler';
+    addNewAvailabilityHandler,
+    deleteAvailabilityHandler,
+    getAvailabilityDetailsHandler,
+    getAvailabilityListHandler,
+    updateAvailabilityDetailsHandler
+} from '../../common/lib/availability/availabilityHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
 
@@ -37,13 +34,13 @@ router.route('/list').post(async (req, res) => {
   
       filter.query = { ...filter.query };
   
-      const outputResult = await getAppointmentListHandler(filter);
+      const outputResult = await getAvailabilityListHandler(filter);
       res.status(responseStatus.STATUS_SUCCESS_OK);
       res.send({
         status: responseData.SUCCESS,
         data: {
-          appointmentList: outputResult.list ? outputResult.list : [],
-          appointmentCount: outputResult.count ? outputResult.count : 0,
+          availabilityList: outputResult.list ? outputResult.list : [],
+          availabilityCount: outputResult.count ? outputResult.count : 0,
         },
       });
     } catch (err) {
@@ -56,46 +53,16 @@ router.route('/list').post(async (req, res) => {
     }
   });
 
-  
-router.get('/upcoming', async (req, res) => {
-    try {
-        const appointments = await getAllUpcomingAppointmentsHandler();
-        res.status(responseStatus.STATUS_SUCCESS_OK).send({
-            status: responseData.SUCCESS,
-            data: { appointments }
-        });
-    } catch (err) {
-        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
-            status: responseData.ERROR,
-            data: { message: err }
-        });
-    }
-});
-
-router.get('/past', async (req, res) => {
-    try {
-        const appointments = await getAllPastAppointmentsHandler()
-        res.status(responseStatus.STATUS_SUCCESS_OK).send({
-            status: responseData.SUCCESS,
-            data: { appointments }
-        });
-    } catch (err) {
-        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
-            status: responseData.ERROR,
-            data: { message: err }
-        });
-    }
-});
 
 router.route('/new').post(async (req, res) => {
     try {
        if (!_.isEmpty(req.body)) {
-            const outputResult = await addNewAppointmentHandlerV2(req.body.appointment);
+            const outputResult = await addNewAvailabilityHandler(req.body.availability);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
                 data: {
-                    appointment: outputResult ? outputResult : {}
+                    availability: outputResult ? outputResult : {}
                 }
             });
         } else {
@@ -111,17 +78,15 @@ router.route('/new').post(async (req, res) => {
     }
 });
 
-
-
 router.route('/:id').get(async (req, res) => {
     try {
         if (req.params.id) {
-            const gotAppointment = await getAppointmentDetailsHandler(req.params);
+            const gotAvailability = await getAvailabilityDetailsHandler(req.params);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
                 data: {
-                    appointment: gotAppointment ? gotAppointment : {}
+                    availability: gotAvailability ? gotAvailability : {}
                 }
             });
         } else {
@@ -139,17 +104,17 @@ router.route('/:id').get(async (req, res) => {
 
 router.route('/:id/update').post( async (req, res) => {
     try {
-        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.appointment)) {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.availability)) {
             let input = {
                 objectId: req.params.id,
-                updateObject: req.body.appointment
+                updateObject: req.body.availability
             }
-            const updateObjectResult = await updateAppointmentDetailsHandler(input);
+            const updateObjectResult = await updateAvailabilityDetailsHandler(input);
             res.status(responseStatus.STATUS_SUCCESS_OK);
                 res.send({
                     status: responseData.SUCCESS,
                     data: {
-                        appointment: updateObjectResult ? updateObjectResult : {}
+                        availability: updateObjectResult ? updateObjectResult : {}
                     }
                 });
         } else {
@@ -168,12 +133,12 @@ router.route('/:id/update').post( async (req, res) => {
 router.route('/:id/remove').post(async(req, res) => {
     try {
         if (req.params.id) {
-            const deletedAppointment = await deleteAppointmentHandler(req.params.id);
+            const deletedAvailability = await deleteAvailabilityHandler(req.params.id);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
                 data: {
-                    hasAppointmentDeleted: true
+                    hasAvailabilityDeleted: true
                 }
             });
         } else {

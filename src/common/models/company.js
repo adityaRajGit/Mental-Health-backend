@@ -43,9 +43,8 @@ const companySchema = new Schema({
         type: Number,
         default: 0
     },
-    sessionsCompleted: {
-        type: Number,
-        default: 0
+    counselling_sessions:{
+        type:Number,
     },
     visibility: {
         type: Boolean,
