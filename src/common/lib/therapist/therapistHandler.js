@@ -509,7 +509,6 @@ export async function recommendTherapistsHandler(input) {
   console.log("Starting recommendTherapistsHandler with input:", input);
 
   try {
-    
     const userId = input.user_id;
     if (userId) {
       const attempts = userFailedAttempts[userId]?.count || 0;
@@ -531,8 +530,13 @@ export async function recommendTherapistsHandler(input) {
     const therapistIds = availabilities.map(a => a.therapist);
     console.log(`Therapist IDs with availability:`, therapistIds);
     
-    // Fetch matching therapists (excluding busy ones)
-    const therapists = await fetchMatchingTherapists(therapistIds, {
+    // Filter out busy therapists
+    const availableTherapistIds = therapistIds.filter(id => 
+      !busyTherapistIds.includes(id.toString())
+    );
+    
+    // First try: fetch therapists matching both specialization and time slot
+    const therapists = await fetchMatchingTherapists(availableTherapistIds, {
       specialization: input.specialization,
       language: input.language,
       city: input.city,
@@ -540,16 +544,70 @@ export async function recommendTherapistsHandler(input) {
     }, busyTherapistIds);
     console.log(`Filtered therapists count after removing conflicts: ${therapists.length}`);
     
-    const scored = scoreTherapists(therapists, availabilities, {
+    let scored = scoreTherapists(therapists, availabilities, {
       language: input.language,
       city: input.city,
       country: input.country,
       dayOfWeek
     }, targetMinutes);
     
-    scored.sort((a, b) => b.score - a.score);
+    let recommendedTherapist = null;
     
-    const recommendedTherapist = formatRecommendedTherapist(scored[0]);
+    // If we found therapists matching both criteria
+    if (scored.length > 0) {
+      scored.sort((a, b) => b.score - a.score);
+      recommendedTherapist = formatRecommendedTherapist(scored[0]);
+    } 
+    // Second try: if no therapist matches specialization, get ANY with the right time slot
+    else if (availableTherapistIds.length > 0) {
+      console.log("No therapist matched specialization criteria. Finding random available therapist...");
+      
+      // Get all therapists with the right time slot (regardless of specialization)
+      const timeSlotTherapists = await therapistHelper.getAllObjects({
+        query: {
+          _id: { $in: availableTherapistIds },
+          is_deleted: false
+        }
+      });
+      
+      if (timeSlotTherapists.length > 0) {
+        // Pick a random therapist from those available
+        const randomIndex = Math.floor(Math.random() * timeSlotTherapists.length);
+        const randomTherapist = timeSlotTherapists[randomIndex];
+        
+        // Find matching time slot for this therapist
+        const therapistAvailability = availabilities.find(a => 
+          String(a.therapist) === String(randomTherapist._id)
+        );
+        
+        const availableTimeSlots = therapistAvailability ? therapistAvailability.days[dayOfWeek] : [];
+        
+        let matchingSlot = null;
+        for (const slot of availableTimeSlots) {
+          if (slot.from && slot.to && isTimeInRange(targetMinutes, slot.from, slot.to)) {
+            matchingSlot = slot;
+            break;
+          }
+        }
+        
+        // Format the randomly selected therapist
+        recommendedTherapist = {
+          id: randomTherapist._id,
+          name: randomTherapist.name,
+          email: randomTherapist.email,
+          specialization: randomTherapist.specialization,
+          languages: randomTherapist.languages,
+          location: randomTherapist.location,
+          profile_image: randomTherapist.profile_image,
+          session_details: randomTherapist.session_details,
+          score: 1, // Minimum score since it's just a time match
+          available_slot: matchingSlot || null,
+          random_assignment: true // Flag to indicate this was a random assignment
+        };
+        
+        console.log("Assigned random available therapist:", recommendedTherapist.name);
+      }
+    }
     
     if (recommendedTherapist) {
       console.log("Recommended therapist:", recommendedTherapist);
