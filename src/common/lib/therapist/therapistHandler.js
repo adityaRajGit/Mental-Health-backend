@@ -334,30 +334,32 @@ async function getTherapistsWithConflictingAppointments(datetime, sessionDuratio
   const sessionStart = new Date(datetime);
   const sessionEnd = new Date(sessionStart.getTime() + sessionDuration * 60000);
   
-  
-  const conflictingAppointments = await appointmentHelper.getAllObjects({
+  //Approach: Pre-fetch appointments that might get conflicted
+  const potentialConflicts = await appointmentHelper.getAllObjects({
     query: {
       payment_status: "CONFIRMED",
       is_deleted: false,
-      $or: [
-        // Appointment starts during our session
-        {
-          scheduled_at: {
-            $gte: sessionStart,
-            $lt: sessionEnd
-          }
-        },
-        // Appointment ends during our session
-        {
-          $expr: {
-            $and: [
-              { $lte: ["$scheduled_at", sessionStart] },
-              { $gt: [{ $add: ["$scheduled_at", { $multiply: ["$duration", 60000] }] }, sessionStart] }
-            ]
-          }
-        }
-      ]
+      scheduled_at: { $lt: sessionEnd } 
     }
+  });
+  
+  const conflictingAppointments = potentialConflicts.filter(appointment => {
+    // Get appointment duration (default to 60 if missing or invalid)
+    const apptDuration = typeof appointment.duration === 'number' 
+      ? appointment.duration 
+      : (parseInt(appointment.duration) || 60);
+      
+    // Calculate when this appointment ends
+    const apptStart = new Date(appointment.scheduled_at);
+    const apptEnd = new Date(apptStart.getTime() + (apptDuration * 60000));
+    
+    // Check if this appointment overlaps with the requested time
+    return (
+      // Case 1: Appointment starts during our requested session
+      (apptStart >= sessionStart && apptStart < sessionEnd) ||
+      // Case 2: Appointment ends during our requested session
+      (apptEnd > sessionStart && apptStart <= sessionStart)
+    );
   });
   
   const busyTherapistIds = conflictingAppointments.map(apt => apt.therapist_id.toString());
