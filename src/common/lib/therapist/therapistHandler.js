@@ -334,30 +334,32 @@ async function getTherapistsWithConflictingAppointments(datetime, sessionDuratio
   const sessionStart = new Date(datetime);
   const sessionEnd = new Date(sessionStart.getTime() + sessionDuration * 60000);
   
-  
-  const conflictingAppointments = await appointmentHelper.getAllObjects({
+  //Approach: Pre-fetch appointments that might get conflicted
+  const potentialConflicts = await appointmentHelper.getAllObjects({
     query: {
       payment_status: "CONFIRMED",
       is_deleted: false,
-      $or: [
-        // Appointment starts during our session
-        {
-          scheduled_at: {
-            $gte: sessionStart,
-            $lt: sessionEnd
-          }
-        },
-        // Appointment ends during our session
-        {
-          $expr: {
-            $and: [
-              { $lte: ["$scheduled_at", sessionStart] },
-              { $gt: [{ $add: ["$scheduled_at", { $multiply: ["$duration", 60000] }] }, sessionStart] }
-            ]
-          }
-        }
-      ]
+      scheduled_at: { $lt: sessionEnd } 
     }
+  });
+  
+  const conflictingAppointments = potentialConflicts.filter(appointment => {
+    // Get appointment duration (default to 60 if missing or invalid)
+    const apptDuration = typeof appointment.duration === 'number' 
+      ? appointment.duration 
+      : (parseInt(appointment.duration) || 60);
+      
+    // Calculate when this appointment ends
+    const apptStart = new Date(appointment.scheduled_at);
+    const apptEnd = new Date(apptStart.getTime() + (apptDuration * 60000));
+    
+    // Check if this appointment overlaps with the requested time
+    return (
+      // Case 1: Appointment starts during our requested session
+      (apptStart >= sessionStart && apptStart < sessionEnd) ||
+      // Case 2: Appointment ends during our requested session
+      (apptEnd > sessionStart && apptStart <= sessionStart)
+    );
   });
   
   const busyTherapistIds = conflictingAppointments.map(apt => apt.therapist_id.toString());
@@ -401,17 +403,83 @@ function isTimeInRange(targetMinutes, fromTime, toTime, sessionDuration = 60) {
   const toMinutes = timeToMinutes(toTime);
   const sessionEndMinutes = targetMinutes + sessionDuration;
   
-  return targetMinutes >= fromMinutes && sessionEndMinutes <= toMinutes;
+  // Core check - is the session fully contained in the slot?
+  const exactMatch = targetMinutes >= fromMinutes && sessionEndMinutes <= toMinutes;
+  
+  // Boundary checks - handle edge cases
+  const startsBoundary = targetMinutes === toMinutes; // Starts exactly when slot ends
+  const endsBoundary = sessionEndMinutes === fromMinutes; // Ends exactly when slot starts
+  
+  // Accept exact matches, reject boundary cases
+  return exactMatch && !startsBoundary && !endsBoundary;
 }
 
  
 function scoreTherapists(therapists, availabilities, criteria, targetMinutes) {
   const { language, city, country, dayOfWeek } = criteria;
+  const sessionDuration = 60; // Default session duration
+  
+  console.log(`Scoring therapists for time: ${targetMinutes} minutes (${Math.floor(targetMinutes/60)}:${targetMinutes%60})`);
   
   return therapists.map(therapist => {
     let score = 0;
-
     
+    // Find therapist's availability
+    const therapistAvailability = availabilities.find(a => String(a.therapist) === String(therapist._id));
+    const availableTimeSlots = therapistAvailability ? therapistAvailability.days[dayOfWeek] : [];
+    
+    console.log(`Therapist ${therapist.name} has ${availableTimeSlots.length} slots for ${dayOfWeek}`);
+    if (availableTimeSlots.length > 0) {
+      console.log(`Time slots for ${therapist.name}: ${JSON.stringify(availableTimeSlots)}`);
+    }
+
+    // Check for exact time slot match only
+    let matchingSlot = null;
+    
+    for (const slot of availableTimeSlots) {
+      if (slot.from && slot.to) {
+        const fromMinutes = timeToMinutes(slot.from);
+        const toMinutes = timeToMinutes(slot.to);
+        console.log(`Checking slot ${slot.from}-${slot.to} (${fromMinutes}-${toMinutes}) against target ${targetMinutes}`);
+        
+        // Exact match only
+        if (isTimeInRange(targetMinutes, slot.from, slot.to)) {
+          matchingSlot = slot;
+          score += 4; // Time match is important
+          console.log(`Found matching time slot for ${therapist.name}: ${slot.from}-${slot.to}`);
+          break;
+        }
+      }
+    }
+    
+    // If no exact match, return zero score
+    if (!matchingSlot) {
+      console.log(`No matching time slot found for ${therapist.name}`);
+      return { therapist, score: 0, matchingSlot: null };
+    }
+
+    // Continue scoring only if exact time match found
+    
+    // Specialization matching
+    if (criteria.specialization) {
+      const userSpecializations = Array.isArray(criteria.specialization) 
+        ? criteria.specialization 
+        : [criteria.specialization];
+      
+      const therapistSpecializations = therapist.specialization || [];
+      
+      // Check for matching specializations
+      const hasSpecialization = userSpecializations.some(s => 
+        therapistSpecializations.includes(s)
+      );
+      
+      if (hasSpecialization) {
+        score += 3;
+        console.log(`Specialization match for ${therapist.name}: +3 points`);
+      }
+    }
+
+    // Additional scoring criteria (language, location)
     if (language) {
       const userLanguages = Array.isArray(language) ? language : [language];
       const therapistLanguages = therapist.languages?.map(l => l.toLowerCase()) || [];
@@ -423,6 +491,7 @@ function scoreTherapists(therapists, availabilities, criteria, targetMinutes) {
       
       if (matchingLanguages.length > 0) {
         score += 2;
+        console.log(`Language match for ${therapist.name}: +2 points`);
         // Give slight bonus for each additional matching language
         if (matchingLanguages.length > 1) {
           score += 0.5 * (matchingLanguages.length - 1);
@@ -432,28 +501,17 @@ function scoreTherapists(therapists, availabilities, criteria, targetMinutes) {
 
     if (city && therapist.location?.city?.toLowerCase() === city.toLowerCase()) {
       score += 0.5;
+      console.log(`City match for ${therapist.name}: +0.5 points`);
     }
 
-    
     if (country && therapist.location?.country?.toLowerCase() === country.toLowerCase()) {
       score += 1;
+      console.log(`Country match for ${therapist.name}: +1 point`);
     }
 
-    // Find matching time slot
-    const therapistAvailability = availabilities.find(a => String(a.therapist) === String(therapist._id));
-    const availableTimeSlots = therapistAvailability ? therapistAvailability.days[dayOfWeek] : [];
-
-    let matchingSlot = null;
-    for (const slot of availableTimeSlots) {
-      if (slot.from && slot.to && isTimeInRange(targetMinutes, slot.from, slot.to)) {
-        matchingSlot = slot;
-        score += 4; // Time match is important
-        break;
-      }
-    }
-
+    console.log(`Final score for ${therapist.name}: ${score}`);
     return { therapist, score, matchingSlot };
-  }).filter(entry => entry.score > 0);
+  });
 }
 
 // Format the recommended therapist data
@@ -521,6 +579,7 @@ export async function recommendTherapistsHandler(input) {
     validateRecommendationInput(input);
     
     const { datetime, dayOfWeek, targetMinutes } = parseDatetime(input.preferred_datetime);
+    console.log(`Target time in minutes: ${targetMinutes} (${Math.floor(targetMinutes/60)}:${targetMinutes%60})`);
     
     // Get therapists with conflicting appointments
     const busyTherapistIds = await getTherapistsWithConflictingAppointments(datetime);
@@ -530,8 +589,22 @@ export async function recommendTherapistsHandler(input) {
     const therapistIds = availabilities.map(a => a.therapist);
     console.log(`Therapist IDs with availability:`, therapistIds);
     
+    // IMPORTANT: Verify these therapists actually exist in the database
+    const allTherapists = await therapistHelper.getAllObjects({
+      query: { is_deleted: false }
+    });
+    
+    const validTherapistIds = therapistIds.filter(id => 
+      allTherapists.some(t => t._id.toString() === id.toString())
+    );
+    
+    console.log(`Valid therapist IDs (exist in database): ${validTherapistIds.length}`);
+    if (validTherapistIds.length < therapistIds.length) {
+      console.log("Some therapists from availability records don't exist in the therapist collection!");
+    }
+    
     // Filter out busy therapists
-    const availableTherapistIds = therapistIds.filter(id => 
+    const availableTherapistIds = validTherapistIds.filter(id => 
       !busyTherapistIds.includes(id.toString())
     );
     
@@ -548,7 +621,8 @@ export async function recommendTherapistsHandler(input) {
       language: input.language,
       city: input.city,
       country: input.country,
-      dayOfWeek
+      dayOfWeek,
+      specialization: input.specialization
     }, targetMinutes);
     
     let recommendedTherapist = null;
@@ -562,33 +636,49 @@ export async function recommendTherapistsHandler(input) {
     else if (availableTherapistIds.length > 0) {
       console.log("No therapist matched specialization criteria. Finding random available therapist...");
       
-      // Get all therapists with the right time slot (regardless of specialization)
-      const timeSlotTherapists = await therapistHelper.getAllObjects({
-        query: {
-          _id: { $in: availableTherapistIds },
-          is_deleted: false
-        }
-      });
+      // Find therapists with matching time slots, but check they exist in our list of valid therapists
+      const therapistsWithMatchingSlots = [];
       
-      if (timeSlotTherapists.length > 0) {
-        // Pick a random therapist from those available
-        const randomIndex = Math.floor(Math.random() * timeSlotTherapists.length);
-        const randomTherapist = timeSlotTherapists[randomIndex];
+      for (const availabilityObj of availabilities) {
+        // Convert ObjectId to string for safe comparison
+        const therapistIdStr = availabilityObj.therapist.toString();
         
-        // Find matching time slot for this therapist
-        const therapistAvailability = availabilities.find(a => 
-          String(a.therapist) === String(randomTherapist._id)
+        // Skip if therapist is busy or doesn't exist in the database
+        if (!availableTherapistIds.some(id => id.toString() === therapistIdStr)) {
+          continue;
+        }
+        
+        // Find the actual therapist object
+        const matchingTherapist = allTherapists.find(t => t._id.toString() === therapistIdStr);
+        if (!matchingTherapist) {
+          console.log(`Therapist with ID ${therapistIdStr} from availability doesn't exist in database`);
+          continue;
+        }
+        
+        const slots = availabilityObj.days[dayOfWeek] || [];
+        const matchingSlot = slots.find(slot => 
+          slot.from && slot.to && isTimeInRange(targetMinutes, slot.from, slot.to)
         );
         
-        const availableTimeSlots = therapistAvailability ? therapistAvailability.days[dayOfWeek] : [];
-        
-        let matchingSlot = null;
-        for (const slot of availableTimeSlots) {
-          if (slot.from && slot.to && isTimeInRange(targetMinutes, slot.from, slot.to)) {
-            matchingSlot = slot;
-            break;
-          }
+        if (matchingSlot) {
+          therapistsWithMatchingSlots.push({
+            therapist: matchingTherapist, // Store the whole therapist object
+            slot: matchingSlot
+          });
         }
+      }
+      
+      console.log(`Found ${therapistsWithMatchingSlots.length} therapists with matching time slots`);
+      
+      if (therapistsWithMatchingSlots.length > 0) {
+        // Choose a random therapist from those with matching slots
+        const randomIndex = Math.floor(Math.random() * therapistsWithMatchingSlots.length);
+        const selectedMatch = therapistsWithMatchingSlots[randomIndex];
+        
+        console.log(`Selected random therapist: ${selectedMatch.therapist.name}`);
+        
+        // Use the therapist object directly (no need for getObjectById)
+        const randomTherapist = selectedMatch.therapist;
         
         // Format the randomly selected therapist
         recommendedTherapist = {
@@ -601,11 +691,11 @@ export async function recommendTherapistsHandler(input) {
           profile_image: randomTherapist.profile_image,
           session_details: randomTherapist.session_details,
           score: 1, // Minimum score since it's just a time match
-          available_slot: matchingSlot || null,
+          available_slot: selectedMatch.slot,
           random_assignment: true // Flag to indicate this was a random assignment
         };
         
-        console.log("Assigned random available therapist:", recommendedTherapist.name);
+        console.log("Assigned random available therapist:", randomTherapist.name, "with slot:", selectedMatch.slot);
       }
     }
     
