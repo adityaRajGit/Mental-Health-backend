@@ -102,7 +102,7 @@ export async function sendEmailNotification(email, subject, message) {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("Email sent to:", email);
+    // console.log("Email sent to:", email);
   } catch (error) {
     console.log("Error sending email:", error);
   }

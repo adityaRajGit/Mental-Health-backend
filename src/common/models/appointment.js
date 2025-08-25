@@ -1,37 +1,41 @@
 
 import mongoose from 'mongoose';
-import { CONFIRMED, PENDING } from '../constants/enum';
+import { COMPLETED, CONFIRMED, PENDING, SCHEDULED } from '../constants/enum';
 const Schema = mongoose.Schema;
 
 const appointmentSchema = new Schema({
-    therapist_id:{
-        type:Schema.ObjectId,
-        ref:'Therapist',
-        required:true
+    therapist_id: {
+        type: Schema.ObjectId,
+        ref: 'Therapist',
+        required: true
     },
-    user_id:{
-        type:Schema.ObjectId,
-        ref:'User',
-        required:true
+    user_id: {
+        type: Schema.ObjectId,
+        ref: 'User',
+        required: true
     },
-    scheduled_at:{
-        type:Date,
-        required:true
+    scheduled_at: {
+        type: String,
+        required: true
     },
-    duration:{
-        type:Number,
+    duration: {
+        type: Number,
     },
-    meet_link:{
-        type:String
-    }, 
-    payment_status:{
-        type:String,
-        enum: [CONFIRMED,PENDING],
-        default:PENDING
+    meet_link: {
+        type: String
     },
-    paymentId:{
-        type:Schema.ObjectId
+    payment_status: {
+        type: String,
+        enum: [CONFIRMED, PENDING],
     },
+    appointment_status: {
+        type: String,
+        enum: [SCHEDULED, COMPLETED],
+        default: SCHEDULED
+    },
+    // paymentId:{
+    //     type:Schema.ObjectId
+    // },
     user_feedback: {
         type: Number,
         min: 1,
@@ -39,7 +43,7 @@ const appointmentSchema = new Schema({
     },
     is_deleted: {
         type: Boolean,
-        default: false 
+        default: false
     },
     created_at: {
         type: Date,

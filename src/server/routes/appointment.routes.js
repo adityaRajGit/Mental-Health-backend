@@ -11,6 +11,8 @@ import {
     updateAppointmentDetailsHandler,
     getAllUpcomingAppointmentsHandler,
     getAllPastAppointmentsHandler,
+    getUpcomingAppointmentsByUserHandler,
+    getPastAppointmentsByUserHandler,
 } from '../../common/lib/appointment/appointmentHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
@@ -87,10 +89,40 @@ router.get('/past', async (req, res) => {
     }
 });
 
+router.get('/upcoming/:id', async (req, res) => {
+    try {
+        const appointments = await getUpcomingAppointmentsByUserHandler(req.params.id);
+        res.status(responseStatus.STATUS_SUCCESS_OK).send({
+            status: responseData.SUCCESS,
+            data: { appointments }
+        });
+    } catch (err) {
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
+router.get('/past/:id', async (req, res) => {
+    try {
+        const appointments = await getPastAppointmentsByUserHandler(req.params.id)
+        res.status(responseStatus.STATUS_SUCCESS_OK).send({
+            status: responseData.SUCCESS,
+            data: { appointments }
+        });
+    } catch (err) {
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
 router.route('/new').post(async (req, res) => {
     try {
        if (!_.isEmpty(req.body)) {
-            const outputResult = await addNewAppointmentHandlerV2(req.body.appointment);
+            const outputResult = await addNewAppointmentHandlerV2(req.body);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,

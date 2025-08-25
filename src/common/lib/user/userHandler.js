@@ -142,11 +142,11 @@ export async function verifyOtpAndCreateUserHandler(input) {
     }
     
     try {
-        console.log("Verifying OTP for email:", email, "OTP:", otp);
+        // console.log("Verifying OTP for email:", email, "OTP:", otp);
         
         // Verify OTP
         const verificationResult = await verifyEmailOTP(email, otp);
-        console.log("Verification result:", verificationResult);
+        // console.log("Verification result:", verificationResult);
         
         if (!verificationResult.success) {
             const errorMessage = verificationResult.error || verificationResult.message || "Invalid or expired OTP";
@@ -233,7 +233,7 @@ export async function userCompanyCreditCheck(input) {
         }
         // Get user ID - can be either a string or an object with id property
         const userId = typeof input === 'string' ? input : input.id;
-        console.log("Input:", input);
+        // console.log("Input:", input);
         
         // Get user and ensure it exists
         const user = await userHelper.getObjectById({ id: userId });
