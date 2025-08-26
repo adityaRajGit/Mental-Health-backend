@@ -13,11 +13,11 @@ export async function createGoogleMeetEvent(options = {}) {
       throw new Error("Service account credentials not found");
     }
     
-    console.log("Service account email:", credentials.client_email);
-    console.log("Project ID:", credentials.project_id);
+    // console.log("Service account email:", credentials.client_email);
+    // console.log("Project ID:", credentials.project_id);
     
     // Create auth client using JWT - FIXING THE AUTH INITIALIZATION
-    console.log("Creating JWT auth client...");
+    // console.log("Creating JWT auth client...");
     const auth = new google.auth.JWT({
       email: credentials.client_email,
       key: credentials.private_key,
@@ -25,27 +25,27 @@ export async function createGoogleMeetEvent(options = {}) {
     });
     
     // This is critical - authorize before using the API
-    console.log("Authorizing JWT...");
+    // console.log("Authorizing JWT...");
     try {
       const authResult = await auth.authorize();
-      console.log("Auth successful. Token expires:", new Date(authResult.expiry_date).toISOString());
+      // console.log("Auth successful. Token expires:", new Date(authResult.expiry_date).toISOString());
     } catch (authError) {
       console.error("Authorization failed:", authError.message);
       throw new Error("JWT authorization failed: " + authError.message);
     }
     
     // Create Calendar client
-    console.log("Creating Calendar client...");
+    // console.log("Creating Calendar client...");
     const calendar = google.calendar({ version: 'v3', auth });
     
     // Test if we can access the calendar API at all
     try {
-      console.log("Testing calendar API access...");
+      // console.log("Testing calendar API access...");
       const calendarList = await calendar.calendarList.list();
-      console.log("Available calendars:", calendarList.data.items.map(cal => ({ id: cal.id, summary: cal.summary })));
+      // console.log("Available calendars:", calendarList.data.items.map(cal => ({ id: cal.id, summary: cal.summary })));
     } catch (listError) {
       console.error("Cannot list calendars:", listError.message);
-      console.log("Calendar API may not be enabled or service account lacks permissions.");
+      // console.log("Calendar API may not be enabled or service account lacks permissions.");
     }
     
     // Format meeting details
@@ -70,12 +70,12 @@ export async function createGoogleMeetEvent(options = {}) {
       }
     };
     
-    console.log("Calendar event payload:", JSON.stringify(event, null, 2));
+    // console.log("Calendar event payload:", JSON.stringify(event, null, 2));
     
     try {
       // First attempt: Try using a specific email address
       const userEmail = 'stay.unfiltered.2025@gmail.com';
-      console.log(`Attempting to create event in calendar: ${userEmail}`);
+      // console.log(`Attempting to create event in calendar: ${userEmail}`);
       
       const response = await calendar.events.insert({
         calendarId: userEmail,
@@ -83,8 +83,8 @@ export async function createGoogleMeetEvent(options = {}) {
         conferenceDataVersion: 1
       });
       
-      console.log("Calendar event created successfully!");
-      console.log("Response:", JSON.stringify(response.data, null, 2));
+      // console.log("Calendar event created successfully!");
+      // console.log("Response:", JSON.stringify(response.data, null, 2));
       
       // Extract the Meet link
       const meetLink = response.data.conferenceData?.entryPoints?.find(
@@ -92,7 +92,7 @@ export async function createGoogleMeetEvent(options = {}) {
       )?.uri;
       
       if (meetLink) {
-        console.log("Google Meet link created:", meetLink);
+        // console.log("Google Meet link created:", meetLink);
         return meetLink;
       }
       throw new Error("No meet link found in the response");
@@ -105,22 +105,22 @@ export async function createGoogleMeetEvent(options = {}) {
       
       // Second attempt: Try using 'primary' calendar
       try {
-        console.log("Attempting to create event in 'primary' calendar");
+        // console.log("Attempting to create event in 'primary' calendar");
         const response = await calendar.events.insert({
           calendarId: 'primary',
           resource: event,
           conferenceDataVersion: 1
         });
         
-        console.log("Primary calendar event created successfully!");
-        console.log("Response:", JSON.stringify(response.data, null, 2));
+        // console.log("Primary calendar event created successfully!");
+        // console.log("Response:", JSON.stringify(response.data, null, 2));
         
         const meetLink = response.data.conferenceData?.entryPoints?.find(
           ep => ep.entryPointType === 'video'
         )?.uri;
         
         if (meetLink) {
-          console.log("Google Meet link created:", meetLink);
+          // console.log("Google Meet link created:", meetLink);
           return meetLink;
         }
         throw new Error("No meet link found in the response");
@@ -137,7 +137,7 @@ export async function createGoogleMeetEvent(options = {}) {
     console.error('Error creating Google Meet link:', error.message);
     
     // Fall back to Jitsi Meet only when Google Meet fails
-    console.log("Falling back to Jitsi Meet...");
+    // console.log("Falling back to Jitsi Meet...");
     const meetingId = generateMeetingId();
     return `https://meet.jit.si/${meetingId}`;
   }

@@ -8,3 +8,7 @@ export const APPROVED = "Approved";
 export const REJECTED = "Rejected";
 export const CONFIRMED = "Confirmed";
 export const CANCELLED = "Cancelled";
+
+export const SCHEDULED = "scheduled";
+export const COMPLETED = "completed";
+
