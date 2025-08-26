@@ -9,6 +9,9 @@ import {
     getAvailabilityListHandler,
     updateAvailabilityDetailsHandler
 } from '../../common/lib/availability/availabilityHandler';
+import {getAllTherapistTimelinesAndSpecialization
+} from '../../common/lib/therapist/therapistHandler';
+import { getAvailableTimeSlotsForDate } from '../../common/lib/appointment/appointmentHandler';
 import responseStatus from "../../common/constants/responseStatus.json";
 import responseData from "../../common/constants/responseData.json";
 
@@ -153,6 +156,45 @@ router.route('/:id/remove').post(async(req, res) => {
         });
     }
 });
+
+router.route('/availabilityTimeSlots').post(async (req, res) => {
+    try {
+        // Validate request body contains a date
+        if (!req.body || !req.body.date) {
+            return res.status(responseStatus.BAD_REQUEST).send({
+                status: responseData.ERROR,
+                data: { message: "Date is required in format YYYY-MM-DD" }
+            });
+        }
+
+        const { date } = req.body;
+        
+        // Validate date format (basic validation)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date)) {
+            return res.status(responseStatus.BAD_REQUEST).send({
+                status: responseData.ERROR,
+                data: { message: "Invalid date format. Please use YYYY-MM-DD" }
+            });
+        }
+
+        // Get available time slots for the specified date
+        const availableSlots = await getAvailableTimeSlotsForDate(date);
+        
+        // Return success response with available slots
+        res.status(responseStatus.STATUS_SUCCESS_OK).send({
+            status: responseData.SUCCESS,
+            data: availableSlots
+        });
+    }
+    catch(e) {
+        console.error("Error getting available time slots:", e);
+        res.status(responseStatus.INTERNAL_SERVER_ERROR).send({
+            status: responseData.ERROR,
+            data: { message: e.message || e }
+        });
+    }
+})
 
 export default router;
   
