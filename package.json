@@ -16,7 +16,9 @@
         "clean": "rimraf dist",
         "slate": "rimraf node_modules && npm install",
         "lint": "eslint server",
-        "test": "jest"
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:recommend": "jest therapistHandler.recommendTherapist.test.js"
     },
     "dependencies": {
         "@sendgrid/mail": "^7.7.0",
