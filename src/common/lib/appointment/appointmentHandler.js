@@ -80,7 +80,10 @@ export async function getUpcomingAppointmentsByUserHandler(userId) {
 
         const upcomingAppointments = userAppointments.filter(appointment => {
             const scheduledDate = new Date(appointment.scheduled_at);
-            return scheduledDate >= now;
+            const oneHourAfter = new Date(scheduledDate.getTime() + 60 * 60 * 1000);
+
+            // keep if appointment is in the future OR within 1 hour after start
+            return scheduledDate >= now || (now >= scheduledDate && now <= oneHourAfter);
         });
 
         return upcomingAppointments.sort((a, b) => {
@@ -140,142 +143,142 @@ export async function addNewAppointmentHandlerV2(input) {
 }
 
 export async function getAllTherapistTimelinesAndSpecialization() {
-  try {
-    // Get all therapists with their availability data
-    const therapists = await therapistHelper.getAllObjects({
-      query: { is_deleted: false }
-    });
+    try {
+        // Get all therapists with their availability data
+        const therapists = await therapistHelper.getAllObjects({
+            query: { is_deleted: false }
+        });
 
-    // Get all availabilities separately to ensure proper data access
-    const allAvailabilities = await availabilityHelper.getAllObjects({
-      query: { is_deleted: false }
-    });
+        // Get all availabilities separately to ensure proper data access
+        const allAvailabilities = await availabilityHelper.getAllObjects({
+            query: { is_deleted: false }
+        });
 
-    // console.log(`Found ${therapists.length} therapists and ${allAvailabilities.length} availability records`);
+        // console.log(`Found ${therapists.length} therapists and ${allAvailabilities.length} availability records`);
 
-    // Extract all unique specializations
-    const specializations = [...new Set(
-      therapists.flatMap(therapist => therapist.specialization || [])
-    )];
+        // Extract all unique specializations
+        const specializations = [...new Set(
+            therapists.flatMap(therapist => therapist.specialization || [])
+        )];
 
-    // Map availabilities to therapists
-    const therapistAvailabilities = therapists.map(therapist => {
-      // Find this therapist's availability record
-      const availabilityObj = allAvailabilities.find(a =>
-        a.therapist && a.therapist.toString() === therapist._id.toString()
-      );
+        // Map availabilities to therapists
+        const therapistAvailabilities = therapists.map(therapist => {
+            // Find this therapist's availability record
+            const availabilityObj = allAvailabilities.find(a =>
+                a.therapist && a.therapist.toString() === therapist._id.toString()
+            );
 
-      // Debug the availability structure
-      // if (availabilityObj) {
-      //   console.log(`Found availability for therapist ${therapist.name}:`, 
-      //     JSON.stringify(availabilityObj.days || availabilityObj));
-      // }
+            // Debug the availability structure
+            // if (availabilityObj) {
+            //   console.log(`Found availability for therapist ${therapist.name}:`, 
+            //     JSON.stringify(availabilityObj.days || availabilityObj));
+            // }
 
-      // Try different possible structures for availability data
-      let availabilityData;
-      if (availabilityObj?.days) {
-        availabilityData = availabilityObj.days;
-      } else if (availabilityObj) {
-        // Maybe days are directly in the object
-        const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        if (daysOfWeek.some(day => Array.isArray(availabilityObj[day]))) {
-          availabilityData = availabilityObj;
-        }
-      }
+            // Try different possible structures for availability data
+            let availabilityData;
+            if (availabilityObj?.days) {
+                availabilityData = availabilityObj.days;
+            } else if (availabilityObj) {
+                // Maybe days are directly in the object
+                const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                if (daysOfWeek.some(day => Array.isArray(availabilityObj[day]))) {
+                    availabilityData = availabilityObj;
+                }
+            }
 
-      return {
-        name: therapist.name,
-        availability: availabilityData || {
-          sunday: [], monday: [], tuesday: [], wednesday: [],
-          thursday: [], friday: [], saturday: []
-        }
-      };
-    });
+            return {
+                name: therapist.name,
+                availability: availabilityData || {
+                    sunday: [], monday: [], tuesday: [], wednesday: [],
+                    thursday: [], friday: [], saturday: []
+                }
+            };
+        });
 
-    // Merge all availabilities
-    const mergedAvailability = mergeTherapistAvailability(therapistAvailabilities);
+        // Merge all availabilities
+        const mergedAvailability = mergeTherapistAvailability(therapistAvailabilities);
 
-    return {
-      specializations,
-      availability: mergedAvailability
-    };
-  } catch (error) {
-    console.error("Error getting therapist timelines and specializations:", error);
-    throw error;
-  }
+        return {
+            specializations,
+            availability: mergedAvailability
+        };
+    } catch (error) {
+        console.error("Error getting therapist timelines and specializations:", error);
+        throw error;
+    }
 }
 
 // Main function to merge therapist availabilities
 function mergeTherapistAvailability(therapists) {
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const mergedAvailability = {};
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const mergedAvailability = {};
 
-  // Debug output
-  // console.log(`Merging availability for ${therapists.length} therapists`);
+    // Debug output
+    // console.log(`Merging availability for ${therapists.length} therapists`);
 
-  // Process each day
-  for (const day of days) {
-    // Collect all time slots for this day from all therapists
-    const allSlots = therapists.flatMap(therapist => {
-      const daySlots = therapist.availability[day] || [];
-      // console.log(`Therapist ${therapist.name} has ${daySlots.length} slots for ${day}`);
-      return daySlots.map(slot => ({
-        from: timeToMinutes(slot.from),
-        to: timeToMinutes(slot.to)
-      }));
-    });
+    // Process each day
+    for (const day of days) {
+        // Collect all time slots for this day from all therapists
+        const allSlots = therapists.flatMap(therapist => {
+            const daySlots = therapist.availability[day] || [];
+            // console.log(`Therapist ${therapist.name} has ${daySlots.length} slots for ${day}`);
+            return daySlots.map(slot => ({
+                from: timeToMinutes(slot.from),
+                to: timeToMinutes(slot.to)
+            }));
+        });
 
-    // console.log(`Total slots collected for ${day}: ${allSlots.length}`);
+        // console.log(`Total slots collected for ${day}: ${allSlots.length}`);
 
-    if (allSlots.length === 0) {
-      mergedAvailability[day] = [];
-      continue;
+        if (allSlots.length === 0) {
+            mergedAvailability[day] = [];
+            continue;
+        }
+
+        // Sort slots by start time
+        allSlots.sort((a, b) => a.from - b.from);
+
+        // Merge overlapping slots
+        const mergedSlots = [allSlots[0]];
+
+        for (let i = 1; i < allSlots.length; i++) {
+            const currentSlot = allSlots[i];
+            const lastMergedSlot = mergedSlots[mergedSlots.length - 1];
+
+            // Check if current slot overlaps or is adjacent to the last merged slot
+            if (currentSlot.from <= lastMergedSlot.to ||
+                currentSlot.from <= lastMergedSlot.to + 1) {
+                // Merge by extending the end time if necessary
+                lastMergedSlot.to = Math.max(lastMergedSlot.to, currentSlot.to);
+            } else {
+                // No overlap, add as a new slot
+                mergedSlots.push(currentSlot);
+            }
+        }
+
+        // Convert back to time strings
+        mergedAvailability[day] = mergedSlots.map(slot => ({
+            from: minutesToTime(slot.from),
+            to: minutesToTime(slot.to)
+        }));
+
+        // console.log(`Merged slots for ${day}: ${mergedAvailability[day].length}`);
     }
 
-    // Sort slots by start time
-    allSlots.sort((a, b) => a.from - b.from);
-
-    // Merge overlapping slots
-    const mergedSlots = [allSlots[0]];
-
-    for (let i = 1; i < allSlots.length; i++) {
-      const currentSlot = allSlots[i];
-      const lastMergedSlot = mergedSlots[mergedSlots.length - 1];
-
-      // Check if current slot overlaps or is adjacent to the last merged slot
-      if (currentSlot.from <= lastMergedSlot.to ||
-        currentSlot.from <= lastMergedSlot.to + 1) {
-        // Merge by extending the end time if necessary
-        lastMergedSlot.to = Math.max(lastMergedSlot.to, currentSlot.to);
-      } else {
-        // No overlap, add as a new slot
-        mergedSlots.push(currentSlot);
-      }
-    }
-
-    // Convert back to time strings
-    mergedAvailability[day] = mergedSlots.map(slot => ({
-      from: minutesToTime(slot.from),
-      to: minutesToTime(slot.to)
-    }));
-
-    // console.log(`Merged slots for ${day}: ${mergedAvailability[day].length}`);
-  }
-
-  return mergedAvailability;
+    return mergedAvailability;
 }
 
 function timeToMinutes(timeStr) {
-  if (!timeStr) return 0;
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return hours * 60 + minutes;
+    if (!timeStr) return 0;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
 }
 
 // Helper function to convert minutes to time string
 function minutesToTime(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 }
 
 
@@ -298,11 +301,11 @@ export async function getAvailableTimeSlotsForDate(date) {
         // console.log(`Fetching general availability from getAllTherapistTimelinesAndSpecialization...`);
         const { specializations, availability } = await getAllTherapistTimelinesAndSpecialization();
         // console.log(`Got ${specializations.length} specializations and availability for ${Object.keys(availability).filter(day => availability[day].length > 0).join(', ')}`);
-        
+
         // Get day's slots
         const daySlots = availability[dayOfWeek] || [];
         // console.log(`Available slots for ${dayOfWeek}: ${JSON.stringify(daySlots)}`);
-        
+
         if (daySlots.length === 0) {
             // console.log(`No availability found for ${dayOfWeek}`);
             // No availability for this day
@@ -317,42 +320,42 @@ export async function getAvailableTimeSlotsForDate(date) {
         // Create start and end of the date for appointment filtering
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
-        
+
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
-        
+
         // console.log(`Querying appointments between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
 
         // Fetch appointments for this specific date
         const appointmentsQuery = {
-    query: {
-        $or: [
-            // For appointments with payment_status
-            {
-                scheduled_at: { 
-                    $gte: startOfDay,
-                    $lte: endOfDay 
-                },
-                is_deleted: false,
-                payment_status: 'CONFIRMED'
-            },
-            // For appointments with appointment_status
-            {
-                scheduled_at: { 
-                    $gte: startOfDay,
-                    $lte: endOfDay 
-                },
-                is_deleted: false,
-                appointment_status: 'scheduled'
+            query: {
+                $or: [
+                    // For appointments with payment_status
+                    {
+                        scheduled_at: {
+                            $gte: startOfDay,
+                            $lte: endOfDay
+                        },
+                        is_deleted: false,
+                        payment_status: 'CONFIRMED'
+                    },
+                    // For appointments with appointment_status
+                    {
+                        scheduled_at: {
+                            $gte: startOfDay,
+                            $lte: endOfDay
+                        },
+                        is_deleted: false,
+                        appointment_status: 'scheduled'
+                    }
+                ]
             }
-        ]
-    }
-};
+        };
         // console.log(`Appointment query: ${JSON.stringify(appointmentsQuery.query)}`);
-        
+
         const appointments = await appointmentHelper.getAllObjects(appointmentsQuery);
         // console.log(`Found ${appointments.length} appointments for ${date}`);
-        
+
         if (appointments.length > 0) {
             appointments.forEach(app => {
                 // console.log(`Appointment: therapist_id=${app.therapist_id}, scheduled_at=${new Date(app.scheduled_at).toLocaleString()}, duration=${app.duration || 60}min`);
@@ -363,12 +366,12 @@ export async function getAvailableTimeSlotsForDate(date) {
         const bookedSlots = appointments.map(appointment => {
             const startTime = new Date(appointment.scheduled_at);
             const endTime = new Date(startTime.getTime() + (appointment.duration || 60) * 60000);
-            
+
             const fromMinutes = startTime.getHours() * 60 + startTime.getMinutes();
             const toMinutes = endTime.getHours() * 60 + endTime.getMinutes();
-            
+
             // console.log(`Converted appointment: ${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()} => ${fromMinutes}-${toMinutes} minutes`);
-            
+
             return {
                 from: fromMinutes,
                 to: toMinutes,
@@ -393,40 +396,40 @@ export async function getAvailableTimeSlotsForDate(date) {
 
         for (const availableSlot of availableSlotsInMinutes) {
             // console.log(`\nProcessing available slot: ${minutesToTime(availableSlot.from)}-${minutesToTime(availableSlot.to)}`);
-            
+
             // Start with the full available slot
             let remainingSlots = [{ from: availableSlot.from, to: availableSlot.to }];
             // console.log(`Starting with remaining slot: ${minutesToTime(availableSlot.from)}-${minutesToTime(availableSlot.to)}`);
-            
+
             // Process each booked appointment
             for (const bookedSlot of bookedSlots) {
                 // console.log(`\n  Checking against booked slot: ${minutesToTime(bookedSlot.from)}-${minutesToTime(bookedSlot.to)}`);
                 const newRemainingSlots = [];
-                
+
                 for (const remainingSlot of remainingSlots) {
                     // console.log(`  Evaluating remaining slot: ${minutesToTime(remainingSlot.from)}-${minutesToTime(remainingSlot.to)}`);
-                    
+
                     // Case 1: Booked slot is completely outside this available slot
                     if (bookedSlot.to <= remainingSlot.from || bookedSlot.from >= remainingSlot.to) {
                         // console.log(`  Case 1: Booked slot is outside - keeping slot intact`);
                         newRemainingSlots.push(remainingSlot);
                         continue;
                     }
-                    
+
                     // Case 2: Booked slot starts before available slot and ends within it
                     if (bookedSlot.from <= remainingSlot.from && bookedSlot.to > remainingSlot.from && bookedSlot.to < remainingSlot.to) {
                         // console.log(`  Case 2: Booked slot starts before and ends within - keeping ${minutesToTime(bookedSlot.to)}-${minutesToTime(remainingSlot.to)}`);
                         newRemainingSlots.push({ from: bookedSlot.to, to: remainingSlot.to });
                         continue;
                     }
-                    
+
                     // Case 3: Booked slot starts within available slot and ends after it
                     if (bookedSlot.from > remainingSlot.from && bookedSlot.from < remainingSlot.to && bookedSlot.to >= remainingSlot.to) {
                         // console.log(`  Case 3: Booked slot starts within and ends after - keeping ${minutesToTime(remainingSlot.from)}-${minutesToTime(bookedSlot.from)}`);
                         newRemainingSlots.push({ from: remainingSlot.from, to: bookedSlot.from });
                         continue;
                     }
-                    
+
                     // Case 4: Booked slot is completely within available slot
                     if (bookedSlot.from > remainingSlot.from && bookedSlot.to < remainingSlot.to) {
                         // console.log(`  Case 4: Booked slot is within - splitting to ${minutesToTime(remainingSlot.from)}-${minutesToTime(bookedSlot.from)} and ${minutesToTime(bookedSlot.to)}-${minutesToTime(remainingSlot.to)}`);
@@ -434,7 +437,7 @@ export async function getAvailableTimeSlotsForDate(date) {
                         newRemainingSlots.push({ from: bookedSlot.to, to: remainingSlot.to });
                         continue;
                     }
-                    
+
                     // Case 5: Booked slot completely covers available slot
                     if (bookedSlot.from <= remainingSlot.from && bookedSlot.to >= remainingSlot.to) {
                         // console.log(`  Case 5: Booked slot completely covers available slot - removing slot`);
@@ -442,34 +445,34 @@ export async function getAvailableTimeSlotsForDate(date) {
                         continue;
                     }
                 }
-                
+
                 // Update remaining slots for next iteration
                 remainingSlots = newRemainingSlots;
                 // console.log(`  After processing this booked slot, remaining slots: ${remainingSlots.map(s => `${minutesToTime(s.from)}-${minutesToTime(s.to)}`).join(', ') || 'none'}`);
             }
-            
+
             // Add all remaining slots to the result
             availableAfterBooking.push(...remainingSlots);
             // console.log(`After processing all booked slots, adding to final result: ${remainingSlots.map(s => `${minutesToTime(s.from)}-${minutesToTime(s.to)}`).join(', ') || 'none'}`);
         }
-        
+
         // console.log(`\n===== MERGING FINAL SLOTS =====`);
         // console.log(`Available slots after booking (before merging): ${availableAfterBooking.map(s => `${minutesToTime(s.from)}-${minutesToTime(s.to)}`).join(', ') || 'none'}`);
-        
+
         // Merge adjacent or overlapping slots
         if (availableAfterBooking.length > 0) {
             // Sort by start time
             availableAfterBooking.sort((a, b) => a.from - b.from);
             // console.log(`Sorted slots: ${availableAfterBooking.map(s => `${minutesToTime(s.from)}-${minutesToTime(s.to)}`).join(', ')}`);
-            
+
             const mergedSlots = [availableAfterBooking[0]];
-            
+
             for (let i = 1; i < availableAfterBooking.length; i++) {
                 const currentSlot = availableAfterBooking[i];
                 const lastMergedSlot = mergedSlots[mergedSlots.length - 1];
-                
+
                 // console.log(`Checking if ${minutesToTime(currentSlot.from)}-${minutesToTime(currentSlot.to)} should merge with ${minutesToTime(lastMergedSlot.from)}-${minutesToTime(lastMergedSlot.to)}`);
-                
+
                 // If current slot overlaps or is adjacent to last merged slot
                 if (currentSlot.from <= lastMergedSlot.to) {
                     // console.log(`Merging slots - extending end time to ${minutesToTime(Math.max(lastMergedSlot.to, currentSlot.to))}`);
@@ -479,9 +482,9 @@ export async function getAvailableTimeSlotsForDate(date) {
                     mergedSlots.push(currentSlot);
                 }
             }
-            
+
             // console.log(`After merging: ${mergedSlots.map(s => `${minutesToTime(s.from)}-${minutesToTime(s.to)}`).join(', ')}`);
-            
+
             // Convert back to time strings and filter minimum duration
             const finalAvailability = mergedSlots
                 .filter(slot => {
@@ -494,9 +497,9 @@ export async function getAvailableTimeSlotsForDate(date) {
                     from: minutesToTime(slot.from),
                     to: minutesToTime(slot.to)
                 }));
-            
+
             // console.log(`Final availability slots: ${JSON.stringify(finalAvailability)}`);
-            
+
             return {
                 specializations,
                 date,
@@ -504,7 +507,7 @@ export async function getAvailableTimeSlotsForDate(date) {
                 availability: finalAvailability
             };
         }
-        
+
         // console.log(`No available slots remaining after deducting booked appointments`);
         return {
             specializations,
