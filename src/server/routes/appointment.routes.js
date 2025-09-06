@@ -171,10 +171,10 @@ router.route('/:id').get(async (req, res) => {
 
 router.route('/:id/update').post( async (req, res) => {
     try {
-        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.appointment)) {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body)) {
             let input = {
                 objectId: req.params.id,
-                updateObject: req.body.appointment
+                updateObject: req.body
             }
             const updateObjectResult = await updateAppointmentDetailsHandler(input);
             res.status(responseStatus.STATUS_SUCCESS_OK);
