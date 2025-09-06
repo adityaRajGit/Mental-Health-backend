@@ -71,7 +71,7 @@ export async function getUpcomingAppointmentsByUserHandler(userId) {
                 {
                     model: 'Therapist',
                     path: 'therapist_id',
-                    select: 'name profile_image'
+                    select: ''
                 }
             ]
         });
