@@ -66,7 +66,8 @@ export async function getTherapistsForUser(userId) {
     ];
     if (therapistIds.length === 0) return [];
     const therapists = await therapistHelper.getAllObjects({
-        query: { _id: { $in: therapistIds }, is_deleted: false }
+        query: { _id: { $in: therapistIds }, is_deleted: false },
+        select: '_id name profile_image specialization location.city location.country academic_background.years_of_experience'
     });
     return therapists;
 }
