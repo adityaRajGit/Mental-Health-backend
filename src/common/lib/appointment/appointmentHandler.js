@@ -107,7 +107,7 @@ export async function getPastAppointmentsByUserHandler(userId) {
                 {
                     model: 'Therapist',
                     path: 'therapist_id',
-                    select: ''
+                    select: '_id name profile_image session_details'
                 }
             ]
         });
