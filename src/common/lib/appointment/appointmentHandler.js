@@ -131,20 +131,37 @@ export async function getPastAppointmentsByUserHandler(userId) {
 
 
 export async function addNewAppointmentHandlerV2(input) {
-    const scheduledAt = new Date(input.appointment.scheduled_at);
+    // Parse the scheduled_at date - handle both formats
+    let scheduledAt;
+    if (input.scheduled_at) {
+        scheduledAt = new Date(input.scheduled_at);
+    } else if (input.appointment?.scheduled_at) {
+        scheduledAt = new Date(input.appointment.scheduled_at);
+    } else {
+        throw new Error("scheduled_at is required");
+    }
+    
     if (isNaN(scheduledAt.getTime())) {
         throw new Error("Invalid scheduled_at date format");
     }
     
+    // Extract user_id and therapist_id from either flat or nested structure
+    const user_id = input.user_id || input.appointment?.user_id;
+    const therapist_id = input.therapist_id || input.appointment?.therapist_id;
+    
+    if (!user_id || !therapist_id) {
+        throw new Error("user_id and therapist_id are required");
+    }
+    
     // Fetch user details (including name for email)
     const users = await userHelper.getAllObjects({
-        query: { is_deleted: false, _id: input.appointment.user_id },
+        query: { is_deleted: false, _id: user_id },
         select: 'email name'
     });
     
     // Fetch therapist details (including session duration)
     const therapists = await therapistHelper.getAllObjects({
-        query: { is_deleted: false, _id: input.appointment.therapist_id },
+        query: { is_deleted: false, _id: therapist_id },
         select: 'name session_details'
     });
     
@@ -159,18 +176,30 @@ export async function addNewAppointmentHandlerV2(input) {
     // Get duration from therapist's session details (default to 60 if not found)
     const duration = therapists[0].session_details?.duration || 60;
     
-    const meetLink = await createGoogleMeetEvent({
-        summary: "Therapy Session",
-        description: "Your scheduled therapy appointment",
-        startTime: scheduledAt.toISOString(),
-        endTime: new Date(scheduledAt.getTime() + duration * 60000).toISOString(),
-        attendees: input.attendees || [] 
-    });
+    let meetLink = null;
+    try {
+        meetLink = await createGoogleMeetEvent({
+            summary: "Therapy Session",
+            description: "Your scheduled therapy appointment",
+            startTime: scheduledAt.toISOString(),
+            endTime: new Date(scheduledAt.getTime() + duration * 60000).toISOString(),
+            attendees: input.attendees || [] 
+        });
+    } catch (meetError) {
+        console.warn("Failed to create Google Meet link:", meetError.message);
+        // Continue without meet link
+    }
     
-    // Add duration to appointment object before saving
-    input.appointment.duration = duration;
-    input.appointment.meet_link = meetLink;
-    const savedAppointment = await appointmentHelper.addObject(input.appointment);
+    // Create appointment object
+    const appointmentData = {
+        user_id: user_id,
+        therapist_id: therapist_id,
+        scheduled_at: scheduledAt,
+        duration: duration,
+        ...(meetLink && { meet_link: meetLink })
+    };
+    
+    const savedAppointment = await appointmentHelper.addObject(appointmentData);
     
     try {
         await sendAppointmentEmail(
@@ -182,6 +211,7 @@ export async function addNewAppointmentHandlerV2(input) {
         console.log("Appointment email sent successfully");
     } catch (emailError) {
         console.error("Failed to send appointment email:", emailError);
+        // Don't throw error here - appointment is already created
     }
     
     return savedAppointment;
