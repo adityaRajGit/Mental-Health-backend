@@ -167,8 +167,6 @@ export async function sendVerificationEmail(email, subject) {
         pass: configVariables.EMAIL_PASS,
       },
     });
-
-    // HTML Email Template
     const htmlMessage = `
     <!DOCTYPE html>
     <html lang="en">
@@ -349,10 +347,159 @@ export async function sendVerificationEmail(email, subject) {
 
     await transporter.sendMail(mailOptions);
     return { success: true, message: "OTP sent successfully" };
-  } catch (error) {
-    console.error("Error sending email:", error);
-    throw error;
+  }
+  catch(e)
+  {
+
   }
 }
+
+export async function sendAppointmentEmail(email, userName, therapistName, appointmentTime) {
+    
+  try {
+          const transporter = nodemailer.createTransport({
+              service: "gmail",
+              auth: {
+                  user: configVariables.EMAIL_USER,
+                  pass: configVariables.EMAIL_PASS,
+              },
+          });
+
+
+    
+    const htmlMessage = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Appointment Confirmed - StayUnfiltered</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdfa; color: #333333;">
+              
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 150, 137, 0.15);">
+                
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #009689 0%, #00a693 100%); padding: 40px 30px; text-align: center;">
+                  <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                    <span style="color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">Stay</span>
+                    <span style="color: #ffffff; font-size: 32px; font-weight: 300; letter-spacing: -0.5px; margin-left: 8px;">Unfiltered</span>
+                  </div>
+                  <p style="color: rgba(255, 255, 255, 0.95); margin: 10px 0 0 0; font-size: 16px; font-weight: 400;">
+                    Your Safe Space for Mental Wellness
+                  </p>
+                </div>
+
+                <!-- Main Content -->
+                <div style="padding: 40px 30px;">
+                  
+                  <!-- Greeting -->
+                  <h2 style="color: #009689; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">
+                    Appointment Confirmed 🎉
+                  </h2>
+                  
+                  <p style="color: #4b5563; margin: 0 0 30px 0; font-size: 16px; line-height: 1.6;">
+                    Hi <strong>${userName}</strong>,<br><br>
+                    Your appointment has been successfully scheduled with <strong style="color: #009689;">${therapistName}</strong>.
+                  </p>
+
+                  <!-- Appointment Details -->
+                  <div style="background: #ecfdf5; border: 2px solid #009689; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+                    <p style="color: #009689; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">
+                      Appointment Details
+                    </p>
+                    <div style="background: #ffffff; border: 2px dashed #009689; border-radius: 8px; padding: 20px; margin: 15px 0;">
+                      <p style="color: #009689; font-size: 18px; font-weight: 700; margin: 0;">Therapist: ${therapistName}</p>
+                      <p style="color: #009689; font-size: 18px; font-weight: 700; margin: 10px 0 0;">Time: ${appointmentTime}</p>
+                    </div>
+                    <p style="color: #6b7280; margin: 15px 0 0 0; font-size: 14px;">
+                      Please join on time to make the most of your session.
+                    </p>
+                  </div>
+
+                  <!-- Next Steps -->
+                  <div style="background: #f0fdfa; border-left: 4px solid #5eead4; padding: 20px; border-radius: 6px; margin: 30px 0;">
+                    <h3 style="color: #0f766e; margin: 0 0 10px 0; font-size: 16px; font-weight: 600;">
+                      🌱 Before your session:
+                    </h3>
+                    <ul style="color: #134e4a; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.5;">
+                      <li>Find a quiet, comfortable space</li>
+                      <li>Ensure a stable internet connection (for online sessions)</li>
+                      <li>Bring a notebook if you'd like to take notes</li>
+                      <li>Take a deep breath — you’re in safe hands</li>
+                    </ul>
+                  </div>
+
+                  <!-- Support -->
+                  <p style="color: #6b7280; margin: 30px 0 0 0; font-size: 14px; line-height: 1.6; text-align: center;">
+                    Need to reschedule or have questions? 🤝<br>
+                    Our caring team is here for you 24/7. You're never alone on this journey.
+                  </p>
+
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f0fdfa; padding: 30px; text-align: center; border-top: 1px solid #a7f3d0;">
+                  <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                    <span style="color: #009689; font-size: 18px; font-weight: 700;">Stay</span>
+                    <span style="color: #009689; font-size: 18px; font-weight: 300; margin-left: 4px;">Unfiltered</span>
+                  </div>
+                  <p style="color: #0f766e; margin: 0 0 5px 0; font-size: 12px; font-style: italic;">
+                    "Healing happens when we feel safe to be ourselves"
+                  </p>
+                  <p style="color: #6b7280; margin: 0 0 10px 0; font-size: 12px;">
+                    © 2025 StayUnfiltered. All rights reserved.
+                  </p>
+                  <p style="color: #6b7280; margin: 0; font-size: 11px;">
+                    This email was sent to ${email}. If you didn’t book this appointment, please contact our support team.
+                  </p>
+                </div>
+
+              </div>
+            </body>
+            </html>
+`;
+
+
+    const textMessage = `
+        🌿 STAYUNFILTERED - Appointment Confirmed
+
+        Hi ${userName}, 
+
+        Your appointment has been successfully scheduled.
+
+        Therapist: ${therapistName}  
+        Time: ${appointmentTime}  
+
+        Please join on time to make the most of your session.
+
+        🌱 Before your session:
+        1. Find a quiet, comfortable space
+        2. Ensure a stable internet connection (for online sessions)
+        3. Bring a notebook if you'd like to take notes
+        4. Take a deep breath — you’re in safe hands
+
+        Need to reschedule or have questions? Our caring team is here for you 24/7.
+
+        © 2025 StayUnfiltered. "Healing happens when we feel safe to be ourselves"
+        `;
+
+
+    const mailOptions = {
+            from: `"StayUnfiltered" <${configVariables.EMAIL_USER}>`,
+            to: email,
+            subject: "Appointment Confirmed - StayUnfiltered",
+            text: textMessage,
+            html: htmlMessage,
+        };
+
+        await transporter.sendMail(mailOptions);
+        return { success: true, message: "Appointment email sent successfully" };
+    } catch (error) {
+        console.error("Error sending appointment email:", error);
+        throw error;
+    }
+}
+
 
 

@@ -1,6 +1,8 @@
 import therapistHelper from '../../helpers/therapist.helper';
+import userHelper from '../../helpers/user.helper.js';
 import availabilityHelper from '../../helpers/availability.helper';
 import appointmentHelper from '../../helpers/appointment.helper';
+import { sendAppointmentEmail } from '../../util/utilHelper.js';
 import moment from 'moment-timezone';
 import { createGoogleMeetEvent } from '../../../util/googleMeet.js';
 
@@ -129,17 +131,58 @@ export async function getPastAppointmentsByUserHandler(userId) {
 
 
 export async function addNewAppointmentHandlerV2(input) {
+    const scheduledAt = new Date(input.appointment.scheduled_at);
+    if (isNaN(scheduledAt.getTime())) {
+        throw new Error("Invalid scheduled_at date format");
+    }
+    
     const meetLink = await createGoogleMeetEvent({
         summary: "Therapy Session",
         description: "Your scheduled therapy appointment",
-        startTime: input.scheduled_at,
-        endTime: new Date(new Date(input.scheduled_at).getTime() + (input.duration || 60) * 60000).toISOString(),
-        attendees: input.attendees || [] // You can add attendee emails here if available
+        startTime: scheduledAt.toISOString(),
+        endTime: new Date(scheduledAt.getTime() + (input.appointment.duration || 60) * 60000).toISOString(),
+        attendees: input.attendees || [] 
     });
-
-    input.meet_link = meetLink;
-
-    return await appointmentHelper.addObject(input);
+    
+    // Fetch user details (including name for email)
+    const users = await userHelper.getAllObjects({
+        query: { is_deleted: false, _id: input.appointment.user_id },
+        select: 'email name'
+    });
+    
+    // Fetch therapist details
+    const therapists = await therapistHelper.getAllObjects({
+        query: { is_deleted: false, _id: input.appointment.therapist_id },
+        select: 'name'
+    });
+    
+    // Check if user and therapist exist
+    if (users.length === 0) {
+        throw new Error("User not found");
+    }
+    if (therapists.length === 0) {
+        throw new Error("Therapist not found");
+    }
+    
+    
+    input.appointment.meet_link = meetLink;
+    const savedAppointment = await appointmentHelper.addObject(input.appointment);
+    
+    
+    try {
+        await sendAppointmentEmail(
+            users[0].email,
+            users[0].name || 'Valued User',
+            therapists[0].name,
+            scheduledAt.toLocaleString()
+        );
+        console.log("Appointment email sent successfully");
+    } catch (emailError) {
+        console.error("Failed to send appointment email:", emailError);
+        // Don't throw error here - appointment is already created
+    }
+    
+    return savedAppointment;
 }
 
 export async function getAllTherapistTimelinesAndSpecialization() {
