@@ -136,24 +136,16 @@ export async function addNewAppointmentHandlerV2(input) {
         throw new Error("Invalid scheduled_at date format");
     }
     
-    const meetLink = await createGoogleMeetEvent({
-        summary: "Therapy Session",
-        description: "Your scheduled therapy appointment",
-        startTime: scheduledAt.toISOString(),
-        endTime: new Date(scheduledAt.getTime() + (input.appointment.duration || 60) * 60000).toISOString(),
-        attendees: input.attendees || [] 
-    });
-    
     // Fetch user details (including name for email)
     const users = await userHelper.getAllObjects({
         query: { is_deleted: false, _id: input.appointment.user_id },
         select: 'email name'
     });
     
-    // Fetch therapist details
+    // Fetch therapist details (including session duration)
     const therapists = await therapistHelper.getAllObjects({
         query: { is_deleted: false, _id: input.appointment.therapist_id },
-        select: 'name'
+        select: 'name session_details'
     });
     
     // Check if user and therapist exist
@@ -164,10 +156,21 @@ export async function addNewAppointmentHandlerV2(input) {
         throw new Error("Therapist not found");
     }
     
+    // Get duration from therapist's session details (default to 60 if not found)
+    const duration = therapists[0].session_details?.duration || 60;
     
+    const meetLink = await createGoogleMeetEvent({
+        summary: "Therapy Session",
+        description: "Your scheduled therapy appointment",
+        startTime: scheduledAt.toISOString(),
+        endTime: new Date(scheduledAt.getTime() + duration * 60000).toISOString(),
+        attendees: input.attendees || [] 
+    });
+    
+    // Add duration to appointment object before saving
+    input.appointment.duration = duration;
     input.appointment.meet_link = meetLink;
     const savedAppointment = await appointmentHelper.addObject(input.appointment);
-    
     
     try {
         await sendAppointmentEmail(
@@ -179,7 +182,6 @@ export async function addNewAppointmentHandlerV2(input) {
         console.log("Appointment email sent successfully");
     } catch (emailError) {
         console.error("Failed to send appointment email:", emailError);
-        // Don't throw error here - appointment is already created
     }
     
     return savedAppointment;
