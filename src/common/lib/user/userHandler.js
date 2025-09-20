@@ -64,11 +64,23 @@ export async function getTherapistsForUser(userId) {
     const therapistIds = [
         ...new Set(appointments.map(app => app.therapist_id.toString()))
     ];
-    if (therapistIds.length === 0) return [];
+    if (therapistIds.length === 0) return [];  
     const therapists = await therapistHelper.getAllObjects({
         query: { _id: { $in: therapistIds }, is_deleted: false }
     });
-    return therapists;
+    return therapists.map(therapist => ({
+        _id: therapist._id,
+        name: therapist.name,
+        profile_image: therapist.profile_image,
+        specialization: therapist.specialization,
+        location: {
+            city: therapist.location?.city,
+            country: therapist.location?.country
+        },
+        academic_background: {
+            years_of_experience: therapist.academic_background?.years_of_experience
+        }
+    }));
 }
 
 export async function updateUserDetailsHandler(input) {
