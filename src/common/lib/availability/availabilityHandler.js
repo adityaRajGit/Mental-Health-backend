@@ -8,6 +8,12 @@ export async function getAvailabilityDetailsHandler(input) {
     return await availabilityHelper.getObjectById(input);
 }
 
+export async function getAvailabilityDetailsByTherapistHandler(input) {
+    return await availabilityHelper.getObjectByQuery({
+        query: { therapist: input.id },
+    });
+}
+
 export async function updateAvailabilityDetailsHandler(input) {
     return await availabilityHelper.directUpdateObject(input.objectId, input.updateObject);
 }

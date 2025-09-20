@@ -58,13 +58,14 @@ export async function getAllPastAppointmentsHandler() {
     }
 }
 
-export async function getUpcomingAppointmentsByUserHandler(userId) {
+export async function getUpcomingAppointmentsByUserHandler(userIdOrTherapistId) {
     try {
         const now = new Date();
 
-        const userAppointments = await appointmentHelper.getAllObjects({
+        // First try fetching by user_id
+        let userAppointments = await appointmentHelper.getAllObjects({
             query: {
-                user_id: userId,
+                user_id: userIdOrTherapistId,
                 is_deleted: false
             },
             populatedQuery: [
@@ -75,6 +76,23 @@ export async function getUpcomingAppointmentsByUserHandler(userId) {
                 }
             ]
         });
+
+        // If no appointments found by user_id, try therapist_id
+        if (userAppointments.length === 0) {
+            userAppointments = await appointmentHelper.getAllObjects({
+                query: {
+                    therapist_id: userIdOrTherapistId,
+                    is_deleted: false
+                },
+                populatedQuery: [
+                    {
+                        model: 'User',
+                        path: 'user_id',
+                        select: ''
+                    }
+                ]
+            });
+        }
 
         if (userAppointments.length === 0) return [];
 
@@ -94,13 +112,14 @@ export async function getUpcomingAppointmentsByUserHandler(userId) {
     }
 }
 
-export async function getPastAppointmentsByUserHandler(userId) {
+export async function getPastAppointmentsByUserHandler(userIdOrTherapistId) {
     try {
         const now = new Date();
 
-        const userAppointments = await appointmentHelper.getAllObjects({
+        // First try fetching by user_id
+        let userAppointments = await appointmentHelper.getAllObjects({
             query: {
-                user_id: userId,
+                user_id: userIdOrTherapistId,
                 is_deleted: false
             },
             populatedQuery: [
@@ -111,6 +130,23 @@ export async function getPastAppointmentsByUserHandler(userId) {
                 }
             ]
         });
+
+        // If no appointments found by user_id, try therapist_id
+        if (userAppointments.length === 0) {
+            userAppointments = await appointmentHelper.getAllObjects({
+                query: {
+                    therapist_id: userIdOrTherapistId,
+                    is_deleted: false
+                },
+                populatedQuery: [
+                    {
+                        model: 'User',
+                        path: 'user_id',
+                        select: ''
+                    }
+                ]
+            });
+        }
 
         if (userAppointments.length === 0) return [];
 
@@ -126,6 +162,7 @@ export async function getPastAppointmentsByUserHandler(userId) {
         throw error;
     }
 }
+
 
 
 export async function addNewAppointmentHandlerV2(input) {

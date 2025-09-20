@@ -5,6 +5,7 @@ import {Router} from 'express';
 import {
     addNewAvailabilityHandler,
     deleteAvailabilityHandler,
+    getAvailabilityDetailsByTherapistHandler,
     getAvailabilityDetailsHandler,
     getAvailabilityListHandler,
     updateAvailabilityDetailsHandler
@@ -60,7 +61,7 @@ router.route('/list').post(async (req, res) => {
 router.route('/new').post(async (req, res) => {
     try {
        if (!_.isEmpty(req.body)) {
-            const outputResult = await addNewAvailabilityHandler(req.body.availability);
+            const outputResult = await addNewAvailabilityHandler(req.body);
             res.status(responseStatus.STATUS_SUCCESS_OK);
             res.send({
                 status: responseData.SUCCESS,
@@ -105,12 +106,36 @@ router.route('/:id').get(async (req, res) => {
     }
 });
 
+router.route('/get-by-therapist/:id').get(async (req, res) => {
+    try {
+        if (req.params.id) {
+            const gotAvailability = await getAvailabilityDetailsByTherapistHandler(req.params);
+            res.status(responseStatus.STATUS_SUCCESS_OK);
+            res.send({
+                status: responseData.SUCCESS,
+                data: {
+                    availability: gotAvailability ? gotAvailability : {}
+                }
+            });
+        } else {
+            throw 'no id param sent'
+        }
+    } catch (err) {
+        console.log(err)
+        res.status(responseStatus.INTERNAL_SERVER_ERROR);
+        res.send({
+            status: responseData.ERROR,
+            data: { message: err }
+        });
+    }
+});
+
 router.route('/:id/update').post( async (req, res) => {
     try {
-        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body) && !_.isEmpty(req.body.availability)) {
+        if (!_.isEmpty(req.params.id) && !_.isEmpty(req.body)) {
             let input = {
                 objectId: req.params.id,
-                updateObject: req.body.availability
+                updateObject: req.body
             }
             const updateObjectResult = await updateAvailabilityDetailsHandler(input);
             res.status(responseStatus.STATUS_SUCCESS_OK);
