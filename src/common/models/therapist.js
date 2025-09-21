@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { THERAPIST_LANGUAGES, THERAPIST_SPECIALIZATIONS } from '../constants/enum.js';
 const Schema = mongoose.Schema;
 
 const therapistSchema = new Schema({
@@ -47,7 +48,8 @@ const therapistSchema = new Schema({
     },
     bio: String,
     specialization: {
-        type: [String]
+        type: [String],
+        enum: THERAPIST_SPECIALIZATIONS
     },
     session_details: {
         duration: {
@@ -69,6 +71,7 @@ const therapistSchema = new Schema({
     },
     languages: {
         type: [String],
+        enum: THERAPIST_LANGUAGES 
     },
     location: {
         city: {
