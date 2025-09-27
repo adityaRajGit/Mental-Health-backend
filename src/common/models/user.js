@@ -67,10 +67,10 @@ const userSchema = new Schema({
     },
     role: {
         type: String,
+        enum: ['user','employee'],
         default: 'user',
         required: true,
     },
-
     blockedUsers: [{
         type: Schema.Types.ObjectId,
         ref: 'User'

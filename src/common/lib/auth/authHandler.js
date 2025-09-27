@@ -86,6 +86,7 @@ export async function userSignupHandler(input) {
     phone: input.phone,
     email: input.email,
     username: username,
+    role: input.role,
     password: hashedPassword,
   };
 
@@ -103,7 +104,7 @@ export async function userSignupHandler(input) {
   }
 
   // Generate a token for the new user
-  const token = generateToken(userData, USER);
+  const token = generateToken(userData, newUser.role);
 
   // Return the user info and token
   return { user: getUserInfo(newUser), token };
@@ -161,7 +162,7 @@ export async function userSignupHandlerGoogle(input) {
         })
       }
 
-      const token = generateToken(user, USER);
+      const token = generateToken(user, 'user');
 
       return { user: getUserInfo(user), token }
     }
@@ -234,7 +235,7 @@ export async function userLoginHandler(input) {
     profile_image: user.profile_image || "",
   }
 
-  const token = generateToken(userData, "user");
+  const token = generateToken(userData, user.role);
 
   return { user: getUserInfo(user), token };
 }
@@ -266,7 +267,7 @@ export async function userLoginHandlerGoogle(input) {
         throw "User not found";
       }
 
-      const token = generateToken(user, USER);
+      const token = generateToken(user, 'user');
 
       return { user: getUserInfo(user), token }
     }

@@ -11,8 +11,8 @@ import {
     updateUserDetailsHandler,
     getUserDetailsHandlerV2,
     userSignUpHandler,
-    verifyOtpAndCreateUserHandler,
-    userCompanyCreditCheck
+    userCompanyCreditCheck,
+    CreateUserHandlerForEmployee
 } from '../../common/lib/user/userHandler';
 import serverConfig from '../../server/config';
 import responseStatus from "../../common/constants/responseStatus.json";
@@ -396,18 +396,9 @@ router.route('/signup/send-otp').post(async (req, res) => {
 });
 
 // Route to verify OTP and create user
-router.route('/signup/verify-otp').post(async (req, res) => {
+router.route('/signup-employee').post(async (req, res) => {
     try {
-        const { email, otp, userData } = req.body;
-        
-        console.log("Received verification request:", { email, otp: otp ? "***" : "missing", userData: userData ? "provided" : "missing" });
-        
-        if (!email || !otp) {
-            return res.status(400).json({
-                status: responseData.ERROR,
-                data: { message: "Email and OTP are required" }
-            });
-        }
+        const { userData } = req.body;
         
         if (!userData || !userData.name) {
             return res.status(400).json({
@@ -416,7 +407,7 @@ router.route('/signup/verify-otp').post(async (req, res) => {
             });
         }
         
-        const result = await verifyOtpAndCreateUserHandler({ email, otp, userData });
+        const result = await CreateUserHandlerForEmployee({ userData });
         
         res.status(responseStatus.STATUS_SUCCESS_OK).json({
             status: responseData.SUCCESS,

@@ -4,8 +4,9 @@ import therapistHelper from '../../helpers/therapist.helper';
 import { v2 as cloudinary } from "cloudinary";
 import company from '../../models/company.js';
 import companyHelper from '../../helpers/company.helper.js';
-import {verifyEmailOTP,sendVerificationEmail} from '../../util/utilHelper.js';
+import { verifyEmailOTP, sendVerificationEmail } from '../../util/utilHelper.js';
 import packageHelper from '../../helpers/package.helper.js';
+import { generateToken } from '../../util/authUtil.js';
 
 
 export async function addNewUserHandler(input) {
@@ -64,7 +65,7 @@ export async function getTherapistsForUser(userId) {
     const therapistIds = [
         ...new Set(appointments.map(app => app.therapist_id.toString()))
     ];
-    if (therapistIds.length === 0) return [];  
+    if (therapistIds.length === 0) return [];
     const therapists = await therapistHelper.getAllObjects({
         query: { _id: { $in: therapistIds }, is_deleted: false }
     });
@@ -110,11 +111,11 @@ export async function userSignUpHandler(input) {
     if (!companyDomain) {
         throw "Invalid email format"
     }
-    
+
     // Search for companies with matching domain
     let companiesWithDomain = await companyHelper.getAllObjects({
-        query: { 
-            company_mail: { 
+        query: {
+            company_mail: {
                 $regex: new RegExp(`@${companyDomain}$`, "i")
             }
         }
@@ -123,18 +124,18 @@ export async function userSignUpHandler(input) {
     // If no companies found, try matching just the domain part
     if (companiesWithDomain.length === 0) {
         const allCompanies = await companyHelper.getAllObjects({});
-        companiesWithDomain = allCompanies.filter(company => 
+        companiesWithDomain = allCompanies.filter(company =>
             company.company_mail && company.company_mail.split("@")[1] === companyDomain
         );
     }
-    
+
     if (companiesWithDomain.length === 0) {
         throw "No company found with this email domain"
     }
-    
+
     // Send OTP to email
     const otpResult = await sendVerificationEmail(input.body.email, "Email Verification Otp");
-    
+
     if (!otpResult.success) {
         throw "Failed to send verification email"
     }
@@ -146,41 +147,28 @@ export async function userSignUpHandler(input) {
 }
 
 // Add new function to verify OTP and complete registration
-export async function verifyOtpAndCreateUserHandler(input) {
-    const { email, otp, userData } = input;
-    
-    if (!email || !otp) {
-        throw new Error("Email and OTP are required");
-    }
-    
+export async function CreateUserHandlerForEmployee(input) {
+    const { userData } = input;
+    const { email } = userData
+
     try {
-        // console.log("Verifying OTP for email:", email, "OTP:", otp);
-        
-        // Verify OTP
-        const verificationResult = await verifyEmailOTP(email, otp);
-        // console.log("Verification result:", verificationResult);
-        
-        if (!verificationResult.success) {
-            const errorMessage = verificationResult.error || verificationResult.message || "Invalid or expired OTP";
-            throw new Error(errorMessage);
-        }
-        
+
         // Check if user already exists
         const existingUser = await userHelper.getObjectByQuery({
             query: { email: email }
         });
-        
+
         if (existingUser) {
             throw new Error("User with this email already exists");
         }
-        
+
         // Hash password if provided
         if (userData.password) {
             const bcrypt = require('bcryptjs');
             const salt = await bcrypt.genSalt(10);
             userData.password = await bcrypt.hash(userData.password, salt);
         }
-        
+
         // Generate username if not provided
         if (!userData.username && userData.name) {
             userData.username = generateUsername(userData.name);
@@ -193,8 +181,8 @@ export async function verifyOtpAndCreateUserHandler(input) {
 
         // Search for companies with matching domain
         let companiesWithDomain = await companyHelper.getAllObjects({
-            query: { 
-                company_mail: { 
+            query: {
+                company_mail: {
                     $regex: new RegExp(`@${companyDomain}$`, "i")
                 }
             }
@@ -203,7 +191,7 @@ export async function verifyOtpAndCreateUserHandler(input) {
         // If no companies found, try matching just the domain part
         if (companiesWithDomain.length === 0) {
             const allCompanies = await companyHelper.getAllObjects({});
-            companiesWithDomain = allCompanies.filter(company => 
+            companiesWithDomain = allCompanies.filter(company =>
                 company.company_mail && company.company_mail.split("@")[1] === companyDomain
             );
         }
@@ -215,11 +203,13 @@ export async function verifyOtpAndCreateUserHandler(input) {
         // Add company_id to userData
         userData.company_id = companiesWithDomain[0]._id;
         userData.email = email;
-        userData.role = userData.role || "user";
+        userData.role = userData.role || "employee";
         userData.email_verified = true;
         // Create user in database
         const newUser = await userHelper.addObject(userData);
-        
+
+        const token = generateToken(userData, "employee");
+
         return {
             message: "User registered successfully",
             user: {
@@ -228,9 +218,10 @@ export async function verifyOtpAndCreateUserHandler(input) {
                 email: newUser.email,
                 username: newUser.username,
                 role: newUser.role
-            }
+            },
+            token
         };
-        
+
     } catch (error) {
         console.error("Error in verifyOtpAndCreateUserHandler:", error);
         throw new Error(`OTP verification failed: ${error.message}`);
@@ -246,18 +237,18 @@ export async function userCompanyCreditCheck(input) {
         // Get user ID - can be either a string or an object with id property
         const userId = typeof input === 'string' ? input : input.id;
         // console.log("Input:", input);
-        
+
         // Get user and ensure it exists
         const user = await userHelper.getObjectById({ id: userId });
         if (!user) {
             throw new Error("User not found");
         }
-        
+
         // Ensure user has a company_id
         if (!user.company_id) {
             throw new Error("User is not associated with any company");
         }
-        
+
         // Get company and ensure it exists
         const companyId = user.company_id.toString();
         const userCompany = await companyHelper.getObjectById({ id: companyId });
@@ -278,7 +269,7 @@ export async function userCompanyCreditCheck(input) {
 
         // Determine if company package is exhausted
         const is_completed = userCompany.status === 'completed';
-        
+
         return {
             counselling_sessions: userCompany.counselling_sessions,
             package_sessions: companyPackage.total_counselling_sessions,
