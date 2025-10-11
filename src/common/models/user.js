@@ -40,7 +40,8 @@ const userSchema = new Schema({
     },
     sessions_balance: {
         type:Number,
-        min: 0
+        min: 0,
+        default:0
     },
     profile_image: {
         type: String

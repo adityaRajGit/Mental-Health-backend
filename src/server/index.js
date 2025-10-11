@@ -28,6 +28,7 @@ import webinarRoutes from "../server/routes/webinar.routes";
 import availabilityRoutes from "../server/routes/availability.routes";
 import otpRoutes from "../server/routes/otp.routes";
 import webinarformRoutes from "../server/routes/webinarform.routes";
+import subscriptionRoutes from "../server/routes/subscription.routes";
 // import {fetchMessageForGroup} from '../common/lib/message/messageHandler'
 
 // Initialize the Express App
@@ -131,6 +132,7 @@ app.use("/api/v1/package", packageRoutes);
 app.use("/api/v1/webinar", webinarRoutes);
 app.use("/api/v1/availability", availabilityRoutes);
 app.use("/api/v1/webinarform", webinarformRoutes);
+app.use("/api/v1/subscription", subscriptionRoutes);
 app.use(session({ secret: "your-session-secret", resave: false, saveUninitialized: true }));
 // app.use(passport.initialize());
 // app.use(passport.session());

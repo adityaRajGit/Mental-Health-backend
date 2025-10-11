@@ -13,6 +13,15 @@ const packageSchema = new Schema({
         enum: ['standard', 'advanced', 'premium', 'custom'],
         required: true
     },
+    user_type: {
+        type: String,
+        enum: ['individual', 'corporate'],
+        required: true,
+        default: 'individual'
+    },
+    total_sessions : {
+        type: Number,
+    },
     description: {
         type: String,
         trim: true
