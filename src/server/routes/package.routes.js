@@ -17,7 +17,7 @@ import protectRoutes from '../../common/util/protectRoutes';
 
 const router = new Router();
 
-router.route('/list').post(protectRoutes.verifyAdmin, async (req, res) => {
+router.route('/list').post( async (req, res) => {
     try {
         let filter = {};
         filter.query = {};
