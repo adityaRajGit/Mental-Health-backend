@@ -26,6 +26,13 @@ const packageSchema = new Schema({
         type: String,
         trim: true
     },
+    points:{
+        type: [String],
+        trim: true
+    },
+    resultCheck:{
+        type: String
+    },
     max_webinars_per_month: {
         type: Number,
     },
@@ -44,10 +51,14 @@ const packageSchema = new Schema({
     max_sessions_minutes: {
         type: Number,
     },
-    timeLine:{
+    timeLine:{ // days
         type: Number,
     },
-    price: {
+    discountedPrice: {
+        type: Number,
+        required: true
+    },
+    realPrice:{
         type: Number,
         required: true
     },

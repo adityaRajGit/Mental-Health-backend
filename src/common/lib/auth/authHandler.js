@@ -205,7 +205,6 @@ export async function userSignupHandlerGoogle(input) {
 
 export async function userLoginHandler(input) {
   let user;
-
   if (input.email) {
     user = await userHelper.getObjectByQuery({
       query: { email: input.email },
@@ -218,6 +217,9 @@ export async function userLoginHandler(input) {
 
   if (!user) {
     throw "User not found"
+  }
+  if (user.googleId) {
+    throw "User logged in with Google"
   }
 
   const isMatch = await bcrypt.compare(input.password, user.password);

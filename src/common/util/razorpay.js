@@ -1,6 +1,6 @@
 import Razorpay from "razorpay";
 import dotenv from "dotenv";
-import configVariables from "../server/config";
+import configVariables from "../../server/config";
 
 dotenv.config({
     path: './.env'

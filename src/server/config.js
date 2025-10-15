@@ -11,5 +11,9 @@ const configVariables = {
   JWT_EXPIRATION: "7d",
   EMAIL_USER: process.env.EMAIL_USER || "",
   EMAIL_PASS: process.env.EMAIL_PASS || "",
+  // RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "rzp_live_RKKqo4uLM9Dmie", // for prod
+  // RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "t01VcNnFRqFxyiQ4S1bhcfWi", // for prod
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "rzp_test_RTQXhKmDvfL3Z4", // for testing
+  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "gkmHPKhW75FOzu3bIXolWaox", // for testing
 };
 export default configVariables;

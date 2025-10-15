@@ -13,18 +13,10 @@ const subscriptionSchema = new Schema({
         ref: 'Package',
         required: true
     },
-    subscription_type: {
-        type: String,
-        enum: ['one_time', 'monthly', 'quarterly', 'annual'],
-        default: 'one_time'
-    },
     status: {
         type: String,
         enum: ['active', 'paused', 'cancelled', 'expired', 'pending'],
         default: 'pending'
-    },
-    razorpay_payment_id: {
-        type:String
     },
     date_bought : {
         type: Date,

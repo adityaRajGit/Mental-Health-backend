@@ -133,7 +133,6 @@ class BaseHelper {
   async getAllObjects(filters) {
     try {
       const query = filters.query ? filters.query : {};
-      console.log(query);
 
       const selectFrom = filters.selectFrom ? filters.selectFrom : {};
       const sortBy = filters.sortBy ? filters.sortBy : { _id: -1 };
