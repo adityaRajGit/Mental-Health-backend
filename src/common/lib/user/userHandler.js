@@ -208,7 +208,7 @@ export async function CreateUserHandlerForEmployee(input) {
         // Create user in database
         const newUser = await userHelper.addObject(userData);
 
-        const token = generateToken(userData, "employee");
+        const token = generateToken(newUser, "employee");
 
         return {
             message: "User registered successfully",
