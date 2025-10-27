@@ -354,7 +354,7 @@ export async function sendVerificationEmail(email, subject) {
   }
 }
 
-export async function sendAppointmentEmail(email, userName, therapistName, appointmentTime) {
+export async function sendAppointmentEmail(email, userName, therapistName, appointmentTime,meetLink) {
     
   try {
           const transporter = nodemailer.createTransport({
@@ -411,6 +411,14 @@ export async function sendAppointmentEmail(email, userName, therapistName, appoi
                     <div style="background: #ffffff; border: 2px dashed #009689; border-radius: 8px; padding: 20px; margin: 15px 0;">
                       <p style="color: #009689; font-size: 18px; font-weight: 700; margin: 0;">Therapist: ${therapistName}</p>
                       <p style="color: #009689; font-size: 18px; font-weight: 700; margin: 10px 0 0;">Time: ${appointmentTime}</p>
+                      ${meetLink ? `
+                      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #a7f3d0;">
+                        <p style="color: #0f766e; font-size: 14px; margin: 0 0 10px 0;">Join your session:</p>
+                        <a href="${meetLink}" style="display: inline-block; background: #009689; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                          Join Meet
+                        </a>
+                      </div>
+                      ` : ''}
                     </div>
                     <p style="color: #6b7280; margin: 15px 0 0 0; font-size: 14px;">
                       Please join on time to make the most of your session.
@@ -472,6 +480,8 @@ export async function sendAppointmentEmail(email, userName, therapistName, appoi
         Time: ${appointmentTime}  
 
         Please join on time to make the most of your session.
+        
+        Meet Link : ${meetLink}
 
         🌱 Before your session:
         1. Find a quiet, comfortable space
