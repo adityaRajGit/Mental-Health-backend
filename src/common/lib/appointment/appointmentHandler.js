@@ -243,6 +243,7 @@ export async function addNewAppointmentHandlerV2(input) {
             users[0].email,
             users[0].name || 'Valued User',
             therapists[0].name,
+            therapists[0].email,
             scheduledAt.toLocaleString(),
             meetLink
         );
