@@ -10,7 +10,7 @@ export async function addNewPackageHandler(input) {
 }
 
 export async function buyPackageHandler(input) {
-    return await processPayment(input.amount);
+    return await processPayment(input);
 }
 
 export async function verifyPayment(input) {

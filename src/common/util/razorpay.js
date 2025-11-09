@@ -11,10 +11,10 @@ const razorpayInstance = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET || configVariables.RAZORPAY_KEY_SECRET,
 });
 
-export const processPayment = async (amount) => {
+export const processPayment = async (input) => {
     const option = {
-        amount: amount * 100,
-        currency: "INR",
+        amount: input.amount * 100,
+        currency: input.currency,
         receipt: `receipt_${new Date().getTime()}`
     }
     try {
