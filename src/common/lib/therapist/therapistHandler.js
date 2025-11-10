@@ -603,8 +603,18 @@ export async function recommendTherapistsHandler(input) {
     //   console.log("Some therapists from availability records don't exist in the therapist collection!");
     // }
 
-    // Filter out busy therapists
-    const availableTherapistIds = validTherapistIds.filter(id =>
+    // Filter therapists with 100% profile completion
+    const completeProfileTherapistIds = validTherapistIds.filter(id => {
+      const therapist = allTherapists.find(t => t._id.toString() === id.toString());
+      if (!therapist) return false;
+      
+      const completionPercent = calculateTherapistProfileCompletion(therapist);
+      return completionPercent === 100;
+    });
+
+    // console.log(`Therapists with 100% profile completion: ${completeProfileTherapistIds.length}`);
+
+    const availableTherapistIds = completeProfileTherapistIds.filter(id =>
       !busyTherapistIds.includes(id.toString())
     );
 
@@ -748,6 +758,12 @@ export async function getAllTherapistTimelinesAndSpecialization() {
       query: { is_deleted: false }
     });
 
+    // Filter therapists with 100% profile completion
+    const filtered_therapist = therapists.filter(therapist => {
+      const completionPercent = calculateTherapistProfileCompletion(therapist);
+      return completionPercent === 100;
+    });
+
     // Get all availabilities separately to ensure proper data access
     const allAvailabilities = await availabilityHelper.getAllObjects({
       query: { is_deleted: false }
@@ -757,11 +773,11 @@ export async function getAllTherapistTimelinesAndSpecialization() {
 
     // Extract all unique specializations
     const specializations = [...new Set(
-      therapists.flatMap(therapist => therapist.specialization || [])
+      filtered_therapist.flatMap(therapist => therapist.specialization || [])
     )];
 
-    // Map availabilities to therapists
-    const therapistAvailabilities = therapists.map(therapist => {
+    // Map availabilities to filtered_therapist
+    const therapistAvailabilities = filtered_therapist.map(therapist => {
       // Find this therapist's availability record
       const availabilityObj = allAvailabilities.find(a =>
         a.therapist && a.therapist.toString() === therapist._id.toString()
