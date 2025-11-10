@@ -139,7 +139,7 @@ export async function getPastAppointmentsByUserHandler(userIdOrTherapistId) {
                 query: {
                     therapist_id: userIdOrTherapistId,
                     is_deleted: false
-                },
+                }, 
                 populatedQuery: [
                     {
                         model: 'User',
@@ -152,7 +152,13 @@ export async function getPastAppointmentsByUserHandler(userIdOrTherapistId) {
 
         if (userAppointments.length === 0) return [];
 
+        // Filter out appointments without therapist_id and filter past appointments
         const pastAppointments = userAppointments.filter(appointment => {
+            // Check if therapist_id exists
+            if (!appointment.therapist_id) {
+                return false;
+            }
+            
             const scheduledDate = new Date(appointment.scheduled_at);
             return scheduledDate < now;
         });
