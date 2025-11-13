@@ -1,5 +1,5 @@
 const configVariables = {
-  stage: process.env.STAGE || "dev",
+  stage: process.env.STAGE || "QA",
   mongoURL:
     process.env.MONGO_URL ||
     "mongodb+srv://testusername:8DaXAe9sRUz8T01b@unfiltered-cluster.qfccv.mongodb.net/",
