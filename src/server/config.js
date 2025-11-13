@@ -2,7 +2,7 @@ const configVariables = {
   stage: process.env.STAGE || "dev",
   mongoURL:
     process.env.MONGO_URL ||
-    "mongodb+srv://unfiltered_production_332:Intel007%40%23%24%25@unfiltered-production.ewylbub.mongodb.net/",
+    "mongodb+srv://unfiltered_production_332:Intel007%40%23%24%25@unfiltered-production.ewylbub.mongodb.net/test?retryWrites=true&w=majority",
   PORT: Number(process.env.PORT) || 8080,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
